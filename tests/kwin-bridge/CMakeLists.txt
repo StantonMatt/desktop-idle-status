@@ -1,0 +1,41 @@
+cmake_minimum_required(VERSION 3.22)
+project(desktop_idle_status_test_client LANGUAGES C CXX)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(WAYLAND REQUIRED IMPORTED_TARGET wayland-client)
+find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
+set(PROTOCOL_DIR "/usr/share/qt6/wayland/protocols" CACHE PATH "Protocol XML directory")
+foreach(PROTOCOL IN ITEMS xdg-shell idle-inhibit-unstable-v1)
+    if(PROTOCOL STREQUAL "xdg-shell")
+        set(XML "${PROTOCOL_DIR}/xdg-shell/xdg-shell.xml")
+    else()
+        set(XML "${PROTOCOL_DIR}/idle-inhibit/idle-inhibit-unstable-v1.xml")
+    endif()
+    add_custom_command(OUTPUT "${PROTOCOL}-client-protocol.h" "${PROTOCOL}-protocol.c"
+        COMMAND ${WAYLAND_SCANNER} client-header ${XML} "${PROTOCOL}-client-protocol.h"
+        COMMAND ${WAYLAND_SCANNER} private-code ${XML} "${PROTOCOL}-protocol.c"
+        DEPENDS ${XML} VERBATIM)
+    list(APPEND GENERATED "${PROTOCOL}-protocol.c" "${PROTOCOL}-client-protocol.h")
+endforeach()
+add_executable(inhibitor-client client.c ${GENERATED})
+target_include_directories(inhibitor-client PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(inhibitor-client PRIVATE PkgConfig::WAYLAND)
+target_compile_options(inhibitor-client PRIVATE -Wall -Wextra)
+
+# Independent oracle and visibility controls, only built by the private harness.
+set(BUILD_SHARED_LIBS ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_AUTOMOC ON)
+find_package(ECM REQUIRED NO_MODULE)
+list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+set(QT_MAJOR_VERSION 6)
+include(KDEInstallDirs6)
+find_package(KWin 6.6.6 REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS DBus Widgets)
+find_package(KF6CoreAddons REQUIRED)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins")
+kcoreaddons_add_plugin(desktopidlestatustestoracle SOURCES oracle.cpp
+    INSTALL_NAMESPACE "kwin/plugins")
+set_target_properties(desktopidlestatustestoracle PROPERTIES PREFIX ""
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins/kwin/plugins")
+target_compile_options(desktopidlestatustestoracle PRIVATE -Wall -Wextra)
+target_link_libraries(desktopidlestatustestoracle PRIVATE KWin::kwin Qt6::DBus KF6::CoreAddons)

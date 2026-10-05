@@ -1,0 +1,10 @@
+[Global]
+Name=Desktop Idle Status
+Comment=Desktop screensaver status and idle blockers
+IconName=desktop-idle-status
+DesktopEntry=io.github.StantonMatt.DesktopIdleStatus
+
+[Event/blocked-while-away]
+Name=Screensaver blocked while away
+Comment=The screensaver was blocked while you were away
+Action=Popup

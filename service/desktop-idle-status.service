@@ -1,0 +1,18 @@
+[Unit]
+Description=Desktop Idle Status
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=io.github.StantonMatt.DesktopIdleStatus
+ExecStart=%h/.local/bin/desktop-idle-status
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=5
+# Explicitly started screensaver processes should outlive this observer.
+KillMode=process
+UMask=0077
+
+[Install]
+WantedBy=graphical-session.target

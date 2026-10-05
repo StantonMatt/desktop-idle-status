@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Idle Status
+Comment=Desktop screensaver status and idle blockers
+Icon=desktop-idle-status
+Exec=systemctl --user start desktop-idle-status.service
+StartupNotify=false
+NoDisplay=true
+Categories=System;Monitor;

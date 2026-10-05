@@ -1,0 +1,16 @@
+{
+  "KPackageStructure": "Plasma/Applet",
+  "KPlugin": {
+    "Id": "io.github.StantonMatt.DesktopIdleStatus",
+    "Name": "Desktop Idle Status",
+    "Description": "Desktop screensaver status and idle blockers",
+    "Icon": "desktop-idle-status",
+    "Version": "0.3.0",
+    "License": "GPL-3.0-or-later",
+    "Authors": [{"Name": "Matt Stanton"}],
+    "Category": "System Information"
+  },
+  "X-Plasma-API-Minimum-Version": "6.6",
+  "X-Plasma-NotificationArea": true,
+  "X-Plasma-NotificationAreaCategory": "SystemServices"
+}
