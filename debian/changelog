@@ -1,3 +1,15 @@
+desktop-idle-status (0.1.2-1ppa1~resolute1) resolute; urgency=medium
+
+  * Add persisted Ignore / Stop Ignoring actions for applications holding
+    screensaver (idle) blockers in the widget.
+  * Exclude ignored applications from blocker status, tray counts and new
+    blocking history.
+  * Show the screensaver when the user is away past its timeout and only
+    ignored applications are blocking; leave sleep blockers unaffected.
+  * Bridge built against libkwin6 4:6.6.6-0ubuntu0.1.
+
+ -- Matthew Stanton <stantonmatthewj@gmail.com>  Mon, 05 Oct 2026 19:24:23 -0300
+
 desktop-idle-status (0.1.1-1ppa1~resolute1) resolute; urgency=medium
 
   * Resolve PowerDevil and logind blocker names to installed applications

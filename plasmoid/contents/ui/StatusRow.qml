@@ -15,6 +15,14 @@ PC3.ItemDelegate {
     property string detail: ""
     property int iconSize: 32
     property bool interactive: true
+    property bool ignored: false
+    property string actionText: ""
+    property string actionAccessibleName: actionText
+    property bool actionBusy: false
+    property bool captionError: false
+    readonly property bool showAction: actionText.length > 0
+        && (tooltipHover.hovered || row.visualFocus || actionButton.visualFocus || actionBusy)
+    signal actionTriggered()
     property bool historyRow: false
     property Flickable focusViewport: null
     function revealFocus() {
@@ -28,16 +36,23 @@ PC3.ItemDelegate {
             focusViewport.contentHeight - focusViewport.height));
     }
     onActiveFocusChanged: if (activeFocus) Qt.callLater(revealFocus)
+    function focusAdjacentRow(forward) {
+        let next = nextItemInFocusChain(forward);
+        // Arrow navigation skips row actions; Tab still visits them.
+        while (next !== row && next.objectName === "ignoreButton")
+            next = next.nextItemInFocusChain(forward);
+        next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason);
+    }
     Keys.onReturnPressed: if (interactive) click()
     Keys.onEnterPressed: if (interactive) click()
     Keys.onSpacePressed: event => { event.accepted = !interactive; }
     Keys.onReleased: event => { event.accepted = !interactive && event.key === Qt.Key_Space; }
     hoverEnabled: interactive
     focusPolicy: interactive ? Qt.StrongFocus : Qt.NoFocus
-    // Keep Plasma's themed fill/outline and keyboard focus styling.
+    // Show Plasma's themed background only for interactive rows.
     Binding { target: row.background; property: "visible"; value: row.interactive }
-    Keys.onDownPressed: nextItemInFocusChain().forceActiveFocus(Qt.TabFocusReason)
-    Keys.onUpPressed: nextItemInFocusChain(false).forceActiveFocus(Qt.BacktabFocusReason)
+    Keys.onDownPressed: focusAdjacentRow(true)
+    Keys.onUpPressed: focusAdjacentRow(false)
     Accessible.role: interactive ? Accessible.Button : Accessible.ListItem
     opacity: 1
     leftPadding: Kirigami.Units.smallSpacing
@@ -47,6 +62,7 @@ PC3.ItemDelegate {
     contentItem: RowLayout {
         spacing: Kirigami.Units.smallSpacing * 2
         Kirigami.Icon {
+            opacity: row.ignored ? 0.5 : 1
             source: row.iconName || "application-x-executable"
             Layout.preferredWidth: row.iconSize
             Layout.preferredHeight: row.iconSize
@@ -55,7 +71,7 @@ PC3.ItemDelegate {
             Layout.fillWidth: true
             Layout.alignment: row.caption.length ? Qt.AlignTop : Qt.AlignVCenter
             spacing: 0
-            PC3.Label { textFormat: Text.PlainText; id: nameLabel; objectName: "rowName"; text: row.name; elide: Text.ElideRight; Layout.fillWidth: true }
+            PC3.Label { textFormat: Text.PlainText; id: nameLabel; objectName: "rowName"; text: row.name; opacity: row.ignored ? 0.5 : 1; elide: Text.ElideRight; Layout.fillWidth: true }
             PC3.Label { textFormat: Text.PlainText;
                 id: captionLabel
                 objectName: "rowCaption"
@@ -63,11 +79,12 @@ PC3.ItemDelegate {
                 text: row.caption
                 elide: Text.ElideRight
                 font: Kirigami.Theme.smallFont
-                opacity: 0.75
+                opacity: row.ignored && !row.captionError ? 0.4 : 0.75
                 Layout.fillWidth: true
             }
         }
         ColumnLayout {
+            visible: !row.showAction
             Layout.alignment: Qt.AlignRight | (row.caption.length || row.detail.length ? Qt.AlignTop : Qt.AlignVCenter)
             spacing: 0
             PC3.Label { textFormat: Text.PlainText;
@@ -80,6 +97,23 @@ PC3.ItemDelegate {
                     ? nameLabel.baselineOffset - baselineOffset : 0
             }
             PC3.Label { textFormat: Text.PlainText; text: row.detail; visible: text.length > 0; font: Kirigami.Theme.smallFont; opacity: 0.75; Layout.alignment: Qt.AlignRight }
+        }
+        PC3.ToolButton {
+            id: actionButton
+            objectName: "ignoreButton"
+            visible: row.showAction
+            enabled: !row.actionBusy
+            text: row.actionText
+            icon.name: "mail-thread-ignored"
+            flat: true
+            focusPolicy: Qt.TabFocus
+            Accessible.name: row.actionAccessibleName
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            Keys.onReturnPressed: if (enabled) click()
+            Keys.onEnterPressed: if (enabled) click()
+            Keys.onDownPressed: row.focusAdjacentRow(true)
+            Keys.onUpPressed: row.forceActiveFocus(Qt.BacktabFocusReason)
+            onClicked: row.actionTriggered()
         }
     }
     PC3.ToolTip {

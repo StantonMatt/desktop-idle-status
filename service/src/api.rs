@@ -54,6 +54,8 @@ impl ReturnNotices {
 }
 pub struct Data {
     pub view: View,
+    pub preferences: crate::preferences::Preferences,
+    pub activation: crate::activation::Activation,
     pub generation: u64,
     pub store: Store,
     pub tracker: Tracker,
@@ -73,6 +75,32 @@ pub struct ReservedReturn {
     event: crate::notification::ReturnEvent,
 }
 impl Data {
+    pub fn set_app_ignored(&mut self, app_id: &str, ignored: bool) -> fdo::Result<bool> {
+        let data = self;
+        if !crate::preferences::valid_id(app_id) {
+            return Err(fdo::Error::InvalidArgs(
+                "A stable app id is required".into(),
+            ));
+        }
+        if data
+            .preferences
+            .set(app_id, ignored)
+            .map_err(|e| fdo::Error::Failed(e.to_string()))?
+        {
+            let mut view = data.view.clone();
+            view.ignored_apps = data.preferences.ignored.iter().cloned().collect();
+            if view.unavailable_code != "policyagent-unavailable" {
+                view.state = crate::model::state_for_view(&view, data.tracking_input.1).into();
+            }
+            let (away, available) = data.tracking_input;
+            let storage = data.observe_view(view, adapters::now(), away, available);
+            if let Err(e) = storage {
+                eprintln!("History write failed: {e}");
+            }
+            return Ok(true);
+        }
+        Ok(false)
+    }
     /// Every observation/flush publishes either a changed view or committed
     /// history (including retention-only writes). Failed writes leave pending
     /// intervals intact and must not suppress a changed view.
@@ -83,7 +111,12 @@ impl Data {
         previous != &self.view || matches!(storage, Ok(true))
     }
     pub fn reserve_return(&mut self, entries: &[crate::history::Entry]) -> Option<ReservedReturn> {
-        let event = crate::notification::return_event(entries)?;
+        let entries: Vec<_> = entries
+            .iter()
+            .filter(|e| !self.preferences.ignored.contains(&e.blocker.app_id))
+            .cloned()
+            .collect();
+        let event = crate::notification::return_event(&entries)?;
         let id = self.notices.register()?;
         Some(ReservedReturn { id, event })
     }
@@ -117,6 +150,7 @@ impl Data {
         away: bool,
         available: bool,
     ) -> rusqlite::Result<bool> {
+        self.activation.observe(away, available);
         self.tracking_input = (away, available);
         self.set_view(view);
         let blockers = if self.view.unattributed {
@@ -129,7 +163,9 @@ impl Data {
                 since: at,
             }]
         } else {
-            self.view.blockers.clone()
+            crate::model::effective_blockers(&self.view)
+                .cloned()
+                .collect()
         };
         self.tracker.update(
             at,
@@ -152,14 +188,7 @@ impl Data {
                 if view.unavailable_code != "policyagent-unavailable" {
                     view.unavailable_code.clear();
                     view.unavailable_reason.clear();
-                    view.state = crate::model::derive_state(
-                        view.running_since != 0,
-                        view.off_reason.is_empty(),
-                        true,
-                        !view.blockers.is_empty(),
-                        false,
-                    )
-                    .into();
+                    view.state = crate::model::state_for_view(&view, self.tracking_input.1).into();
                 }
             }
             Err(failure) => invalidate(&mut view, failure),
@@ -253,12 +282,27 @@ fn conflict_rows(view: &View) -> Vec<Row> {
         })
         .collect()
 }
+fn view_blockers(view: &View) -> Vec<Row> {
+    view.blockers
+        .iter()
+        .map(|b| {
+            let mut row = blocker_row(b);
+            row.insert("ignored".into(), crate::model::ignored(view, b).into());
+            row
+        })
+        .collect()
+}
 fn view_rows(view: &View) -> Row {
     fn rows(value: Vec<Row>) -> OwnedValue {
         OwnedValue::try_from(zbus::zvariant::Value::from(value)).expect("serializable rows")
     }
     HashMap::from([
         ("State".into(), s(view.state.clone())),
+        (
+            "IgnoredApps".into(),
+            OwnedValue::try_from(zbus::zvariant::Value::from(view.ignored_apps.clone()))
+                .expect("app ids"),
+        ),
         ("ExactAttribution".into(), view.exact.into()),
         ("UnavailableCode".into(), s(view.unavailable_code.clone())),
         (
@@ -266,10 +310,7 @@ fn view_rows(view: &View) -> Row {
             s(view.unavailable_reason.clone()),
         ),
         ("ScreensaverTimeout".into(), view.timeout.into()),
-        (
-            "Blockers".into(),
-            rows(view.blockers.iter().map(blocker_row).collect()),
-        ),
+        ("Blockers".into(), rows(view_blockers(view))),
         ("BlockedUnattributed".into(), view.unattributed.into()),
         ("LockSleepBlockers".into(), rows(lock_rows(view))),
         ("TimeoutConflicts".into(), rows(conflict_rows(view))),
@@ -365,14 +406,7 @@ impl Api {
     }
     #[zbus(property(emits_changed_signal = "invalidates"))]
     fn blockers(&self) -> Vec<Row> {
-        self.data
-            .lock()
-            .unwrap()
-            .view
-            .blockers
-            .iter()
-            .map(blocker_row)
-            .collect()
+        view_blockers(&self.data.lock().unwrap().view)
     }
     #[zbus(property(emits_changed_signal = "invalidates"))]
     fn blocked_unattributed(&self) -> bool {
@@ -413,6 +447,16 @@ impl Api {
                     .collect()
             })
             .map_err(|e| fdo::Error::Failed(e.to_string()))
+    }
+    #[zbus(property(emits_changed_signal = "invalidates"))]
+    fn ignored_apps(&self) -> Vec<String> {
+        self.data.lock().unwrap().view.ignored_apps.clone()
+    }
+    fn set_app_ignored(&self, app_id: &str, ignored: bool) -> fdo::Result<()> {
+        if self.data.lock().unwrap().set_app_ignored(app_id, ignored)? {
+            let _ = self.changed.send(());
+        }
+        Ok(())
     }
     fn clear_history(&self) -> fdo::Result<()> {
         let mut data = self.data.lock().unwrap();
@@ -460,6 +504,7 @@ impl Api {
 pub async fn publish(conn: &Connection) -> zbus::Result<()> {
     let invalidated = vec![
         "State",
+        "IgnoredApps",
         "ExactAttribution",
         "UnavailableCode",
         "UnavailableReason",
@@ -514,6 +559,111 @@ pub async fn publish_return(
 mod tests {
     use super::*;
     #[test]
+    fn set_app_ignored_and_bridge_refresh_keep_blocked_without_input_tracking() {
+        for available in [false, true] {
+            let dir = crate::history::test_dir();
+            let mut view = crate::model::view(&crate::config::Config {
+                timeout: 60,
+                conflicts: vec![],
+            });
+            view.exact = true;
+            view.unavailable_code.clear();
+            view.state = "blocked".into();
+            view.blockers.push(Blocker {
+                internal_id: "a".into(),
+                app_id: "app".into(),
+                app_name: "App".into(),
+                icon_name: String::new(),
+                caption: String::new(),
+                since: 100,
+            });
+            let mut d = Data {
+                view,
+                generation: 0,
+                store: Store::open(dir.path(), 100).unwrap(),
+                tracker: Tracker::default(),
+                preferences: Default::default(),
+                activation: Default::default(),
+                tracking_input: (true, available),
+                notices: Default::default(),
+            };
+            assert!(d.set_app_ignored("app", true).unwrap());
+            assert_eq!(d.view.state, if available { "ready" } else { "blocked" });
+            assert!(bool::try_from(&view_blockers(&d.view)[0]["ignored"]).unwrap());
+            assert_eq!(d.activation.eligible(&d.view), available);
+            // GetAll's fresh exact bridge observation uses the same rule.
+            let snapshot = adapters::BridgeSnapshot {
+                revision: 2,
+                blockers: d.view.blockers.clone(),
+            };
+            d.view.state = "unknown".into();
+            d.observe_bridge(Ok(snapshot), 200).unwrap();
+            assert_eq!(d.view.state, if available { "ready" } else { "blocked" });
+            assert!(d.set_app_ignored("app", false).unwrap());
+            assert_eq!(d.view.state, "blocked");
+        }
+    }
+    #[test]
+    fn ignore_filters_history_and_return_without_changing_raw_blockers() {
+        let root = crate::paths::test_root();
+        std::fs::create_dir_all(&root).unwrap();
+        let dir = tempfile::tempdir_in(root).unwrap();
+        let config = crate::config::Config {
+            timeout: 60,
+            conflicts: vec![],
+        };
+        let mut view = crate::model::view(&config);
+        view.state = "blocked".into();
+        view.exact = true;
+        let a = Blocker {
+            internal_id: "a".into(),
+            app_id: "ignored".into(),
+            app_name: "Ignored".into(),
+            icon_name: String::new(),
+            caption: String::new(),
+            since: 100,
+        };
+        let mut b = a.clone();
+        b.internal_id = "b".into();
+        b.app_id = "other".into();
+        view.blockers = vec![a.clone(), b.clone()];
+        view.ignored_apps = vec![a.app_id.clone()];
+        let mut d = Data {
+            view: view.clone(),
+            generation: 0,
+            store: Store::open(dir.path(), 100).unwrap(),
+            tracker: Tracker::default(),
+            tracking_input: (false, false),
+            notices: Default::default(),
+            preferences: Default::default(),
+            activation: Default::default(),
+        };
+        d.preferences.set("ignored", true).unwrap();
+        d.observe_view(view.clone(), 100, true, true).unwrap();
+        d.observe_view(view, 800, false, true).unwrap();
+        let rows = d.store.history(7, 800).unwrap();
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].blocker.app_id, "other");
+        assert_eq!(d.view.blockers.len(), 2);
+        let old = crate::history::Entry {
+            blocker: a,
+            start: 100,
+            end: 800,
+        };
+        assert!(d.reserve_return(std::slice::from_ref(&old)).is_none());
+        d.store.write(&[old], 800).unwrap();
+        assert_eq!(
+            d.store.history(7, 800).unwrap().len(),
+            2,
+            "old entries stay"
+        );
+        let notice = d.take_return().unwrap();
+        assert_eq!(notice.event.windows.len(), 1);
+        assert_eq!(notice.event.windows[0].blocker.app_id, "other");
+        let rows = view_blockers(&d.view);
+        assert!(bool::try_from(&rows[0]["ignored"]).unwrap());
+    }
+    #[test]
     fn completed_intervals_survive_write_failures_for_update_reset_and_shutdown() {
         for reset in [false, true] {
             let dir = crate::history::test_dir();
@@ -525,6 +675,8 @@ mod tests {
                 generation: 0,
                 store: Store::open(dir.path(), 100).unwrap(),
                 tracker: Tracker::default(),
+                preferences: Default::default(),
+                activation: Default::default(),
                 tracking_input: (false, false),
                 notices: ReturnNotices::default(),
             };
@@ -564,6 +716,8 @@ mod tests {
             generation: 0,
             store: Store::open(dir.path(), 100).unwrap(),
             tracker: Tracker::default(),
+            preferences: Default::default(),
+            activation: Default::default(),
             tracking_input: (false, false),
             notices: ReturnNotices::default(),
         };
@@ -598,6 +752,8 @@ mod tests {
                 generation: 0,
                 store: Store::open(dir.path(), 100).unwrap(),
                 tracker: Tracker::default(),
+                preferences: Default::default(),
+                activation: Default::default(),
                 tracking_input: (false, false),
                 notices: ReturnNotices::default(),
             }));

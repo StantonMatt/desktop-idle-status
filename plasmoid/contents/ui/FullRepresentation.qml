@@ -73,7 +73,7 @@ PlasmaExtras.Representation {
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Kirigami.Units.smallSpacing
-                    Kirigami.Heading { textFormat: Text.PlainText; level: 3; text: full.controller.mainText; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                    Kirigami.Heading { objectName: "statusHeading"; textFormat: Text.PlainText; level: 3; text: full.controller.mainText; wrapMode: Text.WordWrap; Layout.fillWidth: true }
                     PC3.Label {
                         textFormat: Text.PlainText
                         text: full.controller.statusSubtext
@@ -91,30 +91,6 @@ PlasmaExtras.Representation {
                         onClicked: full.client.startScreensaver()
                     }
                 }
-            }
-            ListView {
-                id: blockers
-                Layout.fillWidth: true
-                Layout.leftMargin: Kirigami.Units.gridUnit + 32 + Kirigami.Units.gridUnit - Kirigami.Units.smallSpacing
-                Layout.rightMargin: Kirigami.Units.gridUnit - Kirigami.Units.smallSpacing
-                Layout.preferredHeight: contentHeight
-                interactive: false
-                visible: full.controller.state === "blocked"
-                model: full.controller.blockerModel
-                delegate: StatusRow {
-                    focusViewport: scroll.contentItem as Flickable
-                    required property var record
-                    objectName: "blocker-" + record.internalId
-                    width: blockers.width
-                    name: record.unidentified ? qsTr("Unidentified window") : Format.appName(record)
-                    caption: record.unidentified ? qsTr("KWin plugin isn't loaded") : Format.caption(record)
-                    iconName: record.unidentified ? "preferences-system-windows" : record.iconName || "application-x-executable"
-                    time: record.since ? full.controller.since(Number(record.since)) : ""
-                    interactive: !record.unidentified
-                    onClicked: if (interactive) full.client.activateWindow(record.internalId)
-                }
-                remove: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Kirigami.Units.shortDuration } }
-                displaced: Transition { NumberAnimation { properties: "x,y"; duration: Kirigami.Units.shortDuration } }
             }
             ColumnLayout {
                 Layout.fillWidth: true
@@ -139,6 +115,38 @@ PlasmaExtras.Representation {
                         }
                     }
                 }
+            }
+            ListView {
+                id: blockers
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.gridUnit + 32 + Kirigami.Units.gridUnit - Kirigami.Units.smallSpacing
+                Layout.rightMargin: Kirigami.Units.gridUnit - Kirigami.Units.smallSpacing
+                Layout.preferredHeight: contentHeight
+                interactive: false
+                visible: full.controller.state === "blocked" || ((full.controller.state === "ready" || full.controller.state === "late") && blockers.count > 0)
+                model: full.controller.blockerModel
+                delegate: StatusRow {
+                    focusViewport: scroll.contentItem as Flickable
+                    required property var record
+                    objectName: "blocker-" + record.internalId
+                    width: blockers.width
+                    name: record.unidentified ? qsTr("Unidentified window") : Format.appName(record)
+                    readonly property string ignoreError: full.client.ignoreErrors && Object.keys(full.client.ignoreErrors).includes(record.appId) ? full.client.ignoreErrors[record.appId] : ""
+                    ignored: record.ignored === true
+                    actionText: record.appId && !record.unidentified ? ignored ? qsTr("Stop Ignoring") : qsTr("Ignore") : ""
+                    actionAccessibleName: ignored ? qsTr("Stop ignoring %1").arg(Format.appName(record))
+                        : qsTr("Ignore %1").arg(Format.appName(record))
+                    actionBusy: full.client.ignorePending ? Object.keys(full.client.ignorePending).includes(record.appId) : false
+                    captionError: ignoreError.length > 0
+                    onActionTriggered: full.client.setAppIgnored(record.appId, !ignored)
+                    caption: ignoreError || (record.unidentified ? qsTr("KWin plugin isn't loaded") : Format.caption(record))
+                    iconName: record.unidentified ? "preferences-system-windows" : record.iconName || "application-x-executable"
+                    time: ignored ? qsTr("Ignored") : record.since ? full.controller.since(Number(record.since)) : ""
+                    interactive: !record.unidentified
+                    onClicked: if (interactive) full.client.activateWindow(record.internalId)
+                }
+                remove: Transition { NumberAnimation { property: "opacity"; to: 0; duration: Kirigami.Units.shortDuration } }
+                displaced: Transition { NumberAnimation { properties: "x,y"; duration: Kirigami.Units.shortDuration } }
             }
             PlasmaExtras.ListSectionHeader { id: historyHeading; text: qsTr("Blocked While Away"); Layout.fillWidth: true; Layout.leftMargin: Kirigami.Units.gridUnit; Layout.rightMargin: Kirigami.Units.gridUnit }
             PC3.Label {

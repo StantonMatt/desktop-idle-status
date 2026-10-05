@@ -50,10 +50,17 @@ for theme in ${DIS_THEMES:-light dark}; do
             DIS_INSTANCES="${DIS_INSTANCES:-1}" DIS_TEST_STATE="$state" DIS_THEME="$theme" DIS_SHOT_PREFIX="$prefix" DIS_ACTION_LOG="$prefix-actions.log" DIS_EXERCISE="${DIS_EXERCISE:-0}" \
             dbus-run-session --config-file="$run/bus.conf" -- /usr/bin/python3 "$repo/tests/plasmoid/session.py" render "$repo" "$run" "$state" "$prefix"
         expected=$state
-        case "$state" in blocked-one|blocked-many|unidentified|long|markup|caption|caption-*) expected=blocked;; empty|ready-one|timeout-unknown|timeout-missing|history-error|clear-error|retention) expected=ready;; unknown-*) expected=unknown;; late-fractional|late-seconds|late-power-lock) expected=late;; esac
+        case "$state" in ignore-action|ignore-error|ignore-mixed|ignore-long|ignore-unavailable|blocked-one|blocked-many|unidentified|long|markup|caption|caption-*) expected=blocked;; ignore-only|ignore-stop|empty|ready-one|timeout-unknown|timeout-missing|history-error|clear-error|retention) expected=ready;; unknown-*) expected=unknown;; late-fractional|late-seconds|late-power-lock) expected=late;; esac
         actual=$(head -n1 "$prefix-state.json")
         [[ "$actual" == "$expected" ]] || { echo "Expected $expected, got $actual" >&2; exit 1; }
         if grep -E 'file://.*/plasmoid/.*(TypeError|ReferenceError|Error:)' "$prefix-viewer.log"; then exit 1; fi
+        case "$state" in
+            ignore-unavailable) grep -Fxq "Screensaver won't start" "$prefix-state.json"; grep -Fxq 'Blocked by Claude' "$prefix-state.json";;
+            ignore-mixed|ignore-long) grep -Fxq 'Blocked by Google Chrome' "$prefix-state.json";;
+            ignore-action|ignore-error) grep -Fxq 'Blocked by Claude and Google Chrome' "$prefix-state.json";;
+            ignore-only|ignore-stop) grep -Fxq 'Screensaver will start' "$prefix-state.json"; grep -Fxq 'After 10 minutes of inactivity' "$prefix-state.json";;
+        esac
+        if [[ $state == ignore-error ]]; then grep -Fq 'IGNORE_ERROR visible' "$prefix-viewer.log"; fi
         # Only the explicitly exercised Start Service action may launch systemctl.
         starts=$(grep -Ec '^SYSTEMCTL ' "$prefix-actions.log" || true)
         if [[ ${DIS_EXERCISE:-0} == 1 && $state == service-down ]]; then

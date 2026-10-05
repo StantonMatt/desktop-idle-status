@@ -1,9 +1,10 @@
 # Desktop Idle Status service (slice 2)
 
 Rust edition 2024, Tokio, zbus 5, wayland-client/protocols, rusqlite, and an
-inotify-backed config watcher. The service only observes the desktop, except
-for the explicit `ActivateWindow`, `StartScreensaver`, and `ClearHistory`
-methods. It never installs/loads the KWin plugin,
+inotify-backed config watcher. The service observes the desktop and persists
+history and ignored-app preferences. Desktop actions are the explicit
+`ActivateWindow` and `StartScreensaver` methods and automatic `Preview` for
+ignored blockers as specified below. It never installs/loads the KWin plugin,
 changes settings, or acquires an idle inhibitor.
 
 ## Session-bus contract
@@ -29,6 +30,7 @@ its exact payload and duration semantics are specified below.
 
 | Property | Signature | Meaning |
 | --- | --- | --- |
+| `IgnoredApps` | `as` | Persisted stable app IDs ignored for screensaver blocking |
 | `State` | `s` | `ready`, `blocked`, `running`, `screensaver-off`, or `unknown` |
 | `ExactAttribution` | `b` | A compatible bridge snapshot is available |
 | `UnavailableCode` | `s` | Stable machine-readable failure code (listed below); empty when available |
@@ -64,6 +66,7 @@ and window captions are intentional display content, not service errors.
 | `appName` | `s` | Desktop-file `Name`, falling back to class, app ID, executable basename |
 | `iconName` | `s` | Desktop-file `Icon`, otherwise `application-x-executable` |
 | `caption` | `s` | Caption with a matching trailing ` — AppName` or ` - AppName` removed |
+| `ignored` | `b` | This app is ignored; raw effective inhibition is still reported |
 | `since` | `x` | First observation of continuous effective inhibition, Unix seconds |
 
 Order is `since`, app name, caption, then UUID. A caption change preserves
@@ -369,7 +372,7 @@ socket descriptors continue to work without a runtime directory.
 
 ## History and notifications
 
-Each effective window gets its own interval while input-only idle is at least
+Each non-ignored effective window gets its own interval while input-only idle is at least
 the configured screensaver timeout and state is blocked. Start is the later
 of observed away start and observed inhibition start; title/identity are
 captured then. Each completed bridge, policy, profile/configuration,
@@ -544,3 +547,66 @@ nonblocking advisory lock on `desktop-idle-status/history.lock` in XDG_DATA_HOME
 also rejects competing daemon or smoke processes, including those on different
 buses. The lock remains held through the final flush and is released by process
 exit; the file is never unlinked.
+
+### Ignoring apps
+
+`SetAppIgnored(appId: s, ignored: b) → ()` persists an app-wide preference before
+confirming success. Empty IDs, control characters and IDs over 4096 bytes return
+`InvalidArgs`; a storage failure returns `Failed` and retains the previous state.
+The method is idempotent and accepts IDs whose windows have since disappeared.
+Changes invalidate `IgnoredApps`, `Blockers` and `State` through the existing
+`PropertiesChanged` and `Changed` publication path. GetAll remains coherent.
+
+Preferences live in `$XDG_CONFIG_HOME/desktop-idle-statusrc` (default
+`~/.config/desktop-idle-statusrc`), independently of history. The service owns
+this file: `[IgnoredApps]` contains lowercase hex-encoded UTF-8 IDs as keys with
+`=true` values. Writes replace the file atomically with mode 0600. Clearing
+history leaves preferences intact. Invalid or unreadable preferences prevent
+startup rather than silently changing the user's choices.
+
+`Blockers` retains every exact effective KWin inhibitor, in its existing order.
+Ignored apps are excluded from blocked state only while input-only tracking is
+available and exact attribution is available without a stale/unavailable marker.
+Otherwise all inhibitors determine blocked state, even when every row is ignored.
+The widget then says “Screensaver won't start”; its blocked tooltip names the
+ignored apps when there are no non-ignored blockers to name. Preferences and per-row
+ignored flags remain unchanged. With bypass available, only non-ignored apps
+determine blocked state and tray tooltip names. Ignored
+rows remain visible, dimmed, with “Ignored” in place of their start time. Hover
+or keyboard focus replaces the time with Ignore / Stop Ignoring; unidentified
+rows have no action. The action stays disabled until service confirmation and a
+matching snapshot. Failure preserves the old state and replaces the caption
+with “Couldn't ignore <App>” / “Couldn't stop ignoring <App>” until another
+snapshot change or popup close. Sleep and screen-locking inhibitors are unchanged.
+
+New history intervals exclude ignored apps. Existing history remains intact;
+return notices exclude currently ignored apps. When input-only ext-idle-notify
+v2 reports away past the configured timeout, the service may bypass a nonempty
+set of exclusively ignored, identified blockers. This also applies when the
+last non-ignored blocker leaves during the same away period. Unavailable input
+tracking, unavailable or stale exact attribution, unidentified inhibitors,
+unavailable showing-state evidence and an already showing saver prevent it.
+
+Before activation the service refreshes the saver owner, requested PolicyAgent
+inhibitions and exact bridge snapshot, checks for observation changes, and
+rechecks after asynchronous proxy preparation. Relevant bridge, PolicyAgent,
+screensaver-owner, power/configuration, system-source and preference events cancel
+in-flight validation or proxy preparation, invalidate its observation generation,
+and are handled by the normal source-refresh loop before another attempt.
+Queued source events take priority over completion and dispatch. It sends `Preview()` on
+`/PlasmaVisualScreensaver`, interface `org.kde.PlasmaVisualScreensaver`, pinned
+to the running saver owner's unique bus name. It does not launch a process.
+There is at most one attempt per away period: dispatching Preview or a
+non-cancellation failure consumes it, including validation errors/deadlines,
+bridge validation failures, proxy-preparation errors/deadlines and Preview
+errors/deadlines. Cancellation or failed eligibility before dispatch consumes
+nothing, so a fresh eligible observation can activate in the same away period.
+Cancellation after dispatch consumes the attempt because Preview may already
+have reached the saver. Input resume or tracking reset permits a new attempt.
+PolicyAgent validation failures clear showing-state evidence, publish source
+unavailability and schedule the normal bounded source-recovery backoff;
+saver-owner failures invalidate process presence and schedule its recovery.
+A whole-validation deadline clears showing-state evidence and schedules both
+source recoveries. Recovery does not permit another activation attempt in the
+same away period. `StartScreensaver` remains the manual background-process
+start action.

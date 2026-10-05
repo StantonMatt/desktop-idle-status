@@ -8,6 +8,13 @@ effective Wayland idle inhibitors and latent inhibitors from minimized, hidden,
 or off-desktop windows. The D-Bus contract is in
 [docs/kwin-bridge-dbus.md](docs/kwin-bridge-dbus.md).
 
+Use **Ignore** / **Stop Ignoring** in the widget to persist an app-wide
+screensaver preference. Ignored apps are excluded from new blocking history.
+With input-only idle tracking and exact attribution available, they do not
+count in blocker status or the tray, and the service shows the screensaver
+after its timeout when only ignored apps are blocking. Sleep blockers are
+unaffected.
+
 ## Install on Kubuntu 26.04
 
 After the Resolute packages are published in the PPA:

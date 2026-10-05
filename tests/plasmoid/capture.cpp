@@ -49,6 +49,17 @@ static int verifyCaptionRows(QQuickItem *item, const QString &name, const QStrin
 }
 static void saveItem(QQuickItem *item, const QString &suffix, std::function<void()> next) {
     if (!item) { qFatal("Missing %s representation", qPrintable(suffix)); }
+    if (suffix == "full" && qEnvironmentVariable("DIS_TEST_STATE") == "ignore-error") {
+        auto *row = findNamed(item, "blocker-claude-id");
+        if (!row || row->property("caption").toString() != "Couldn't ignore Claude") {
+            static int pending = 0;
+            if (++pending > 40) qFatal("Ignore failure did not reach the row");
+            QTimer::singleShot(50, item, [item, suffix, next] { saveItem(item, suffix, next); });
+            return;
+        }
+        if (row->property("ignored").toBool()) qFatal("Failed ignore changed the row state");
+        qInfo("IGNORE_ERROR visible; prior state preserved");
+    }
     auto grab = item->grabToImage();
     if (!grab) qFatal("Cannot grab %s", qPrintable(suffix));
     QObject::connect(grab.data(), &QQuickItemGrabResult::ready, item, [grab, suffix, next]() {
@@ -97,6 +108,15 @@ static void findRoot() {
             QTimer::singleShot(500, [] {
                 auto *full = root->property("fullRepresentationItem").value<QQuickItem *>();
                 const QString fixture = qEnvironmentVariable("DIS_TEST_STATE");
+                if (fixture == "ignore-action" || fixture == "ignore-stop" || fixture == "ignore-error" || fixture == "ignore-long") {
+                    auto *row = qobject_cast<QQuickItem *>(findNamed(full, fixture == "ignore-long" ? "blocker-chrome-id" : "blocker-claude-id"));
+                    if (!row) qFatal("Missing ignore fixture row");
+                    row->forceActiveFocus(Qt::TabFocusReason);
+                    if (fixture == "ignore-error") {
+                        auto *button = findNamed(row, "ignoreButton");
+                        if (!button || !QMetaObject::invokeMethod(button, "click")) qFatal("Cannot exercise ignore failure");
+                    }
+                }
                 if (fixture.startsWith("caption")) {
                     const QString name = fixture == "caption" ? "Firefox" : "Claude";
                     const QString caption = fixture == "caption" ? "Report — Firefox"

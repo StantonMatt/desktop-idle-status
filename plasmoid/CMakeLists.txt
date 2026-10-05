@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(desktop-idle-status-plasmoid VERSION 0.1.1 LANGUAGES NONE)
+project(desktop-idle-status-plasmoid VERSION 0.1.2 LANGUAGES NONE)
 find_package(ECM 6.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 include(KDEInstallDirs6)

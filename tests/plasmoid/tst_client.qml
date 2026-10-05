@@ -26,6 +26,47 @@ TestCase {
     function makeClient() { return createTemporaryObject(simulated, test); }
     function snapshot(index) { reads[index || 0].resolve({value:{State:"ready"}}); }
     function history(index, rows) { calls[index || 0].resolve({value:rows || []}); }
+    function test_ignore_confirmation_failure_and_owner_change() {
+        const client = makeClient(); client.serviceOwner = ":fixture.1";
+        reads[0].resolve({value:{State:"blocked", IgnoredApps:[], Blockers:[{appId:"app",appName:"App",ignored:false}]}});
+        history();
+        client.setAppIgnored("app", true); client.setAppIgnored("app", true);
+        compare(calls.length, 2); compare(calls[1].member, "SetAppIgnored");
+        verify(client.ignorePending.app !== undefined);
+        compare(client.snapshot.Blockers[0].ignored, false);
+        client.snapshot = {State:"ready", IgnoredApps:["app"], Blockers:[{appId:"app",appName:"App",ignored:true}]};
+        verify(client.ignorePending.app !== undefined); // Snapshot alone does not acknowledge the method.
+        calls[1].resolve(); verify(client.ignorePending.app === undefined);
+        client.setAppIgnored("app", false); calls[2].reject();
+        compare(client.ignoreErrors.app, "Couldn't stop ignoring App");
+        compare(client.snapshot.Blockers[0].ignored, true);
+        client.clearIgnoreErrors(); compare(Object.keys(client.ignoreErrors).length, 0);
+        client.setAppIgnored("app", false);
+        client.serviceOwner = ":fixture.2"; calls[3].reject();
+        compare(Object.keys(client.ignorePending).length, 0);
+        compare(Object.keys(client.ignoreErrors).length, 0);
+    }
+    function test_ignore_failure_and_timeout() {
+        const client = makeClient(); client.serviceOwner = ":fixture.1"; snapshot(); history();
+        client.snapshot = {State:"blocked", IgnoredApps:[], Blockers:[{appId:"app",appName:"App",ignored:false}]};
+        client.setAppIgnored("app", true); calls[1].reject();
+        compare(client.ignoreErrors.app, "Couldn't ignore App");
+        client.snapshot = {State:"ready", IgnoredApps:[], Blockers:[]};
+        compare(Object.keys(client.ignoreErrors).length, 0);
+        client.setAppIgnored("app", true);
+        const token = client.ignorePending.app.token;
+        client.ignorePending = {app:{token:token, ignored:true, deadline:Date.now() - 1}};
+        tryVerify(() => client.ignorePending.app === undefined, 1000);
+        compare(client.ignoreErrors.app, "Couldn't ignore app");
+    }
+    function test_ignore_app_ids_do_not_use_object_prototypes() {
+        const client = makeClient(); client.serviceOwner = ":fixture.1"; snapshot(); history();
+        for (const id of ["constructor", "__proto__", "toString"]) {
+            client.setAppIgnored(id, true);
+            verify(Object.keys(client.ignorePending).includes(id));
+        }
+        compare(calls.length, 4);
+    }
     function test_getall_retry_and_bound() {
         const client = makeClient(); client.serviceOwner = ":fixture.1";
         compare(reads.length, 1);

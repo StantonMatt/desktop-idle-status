@@ -41,6 +41,7 @@ impl PairedProbe {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct View {
     pub state: String,
+    pub ignored_apps: Vec<String>,
     pub exact: bool,
     pub unavailable_code: String,
     pub unavailable_reason: String,
@@ -70,6 +71,33 @@ pub fn derive_state(
     } else {
         "unknown"
     }
+}
+pub fn ignored(view: &View, blocker: &Blocker) -> bool {
+    !blocker.app_id.is_empty() && view.ignored_apps.contains(&blocker.app_id)
+}
+pub fn effective_blockers(view: &View) -> impl Iterator<Item = &Blocker> {
+    view.blockers.iter().filter(|b| !ignored(view, b))
+}
+/// Ignoring inhibitors promises a bypass only with exact attribution and a
+/// working input-only tracker. Row preferences remain independent of this gate.
+pub fn ignore_bypass_available(view: &View, input_available: bool) -> bool {
+    input_available && view.exact && view.unavailable_code.is_empty() && !view.unattributed
+}
+pub fn has_blockers(view: &View, input_available: bool) -> bool {
+    if ignore_bypass_available(view, input_available) {
+        effective_blockers(view).next().is_some()
+    } else {
+        !view.blockers.is_empty()
+    }
+}
+pub fn state_for_view(view: &View, input_available: bool) -> &'static str {
+    derive_state(
+        view.running_since != 0,
+        view.off_reason.is_empty(),
+        view.exact,
+        has_blockers(view, input_available),
+        view.unattributed,
+    )
 }
 pub fn is_unattributed(blocker: &Blocker) -> bool {
     blocker.internal_id == "unattributed" && blocker.app_id.is_empty()
@@ -134,6 +162,7 @@ pub fn lock_blockers(
 pub fn view(config: &Config) -> View {
     View {
         state: "unknown".into(),
+        ignored_apps: vec![],
         exact: false,
         unavailable_code: "initializing".into(),
         unavailable_reason: "Initializing".into(),
@@ -149,6 +178,41 @@ pub fn view(config: &Config) -> View {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn ignored_and_unidentified_mixes_determine_state() {
+        let mut v = view(&Config {
+            timeout: 60,
+            conflicts: vec![],
+        });
+        v.exact = true;
+        v.unavailable_code.clear();
+        v.ignored_apps = vec!["ignored".into()];
+        let b = Blocker {
+            internal_id: "one".into(),
+            app_id: "ignored".into(),
+            app_name: "App".into(),
+            icon_name: String::new(),
+            caption: String::new(),
+            since: 1,
+        };
+        v.blockers.push(b.clone());
+        assert_eq!(state_for_view(&v, true), "ready");
+        assert_eq!(state_for_view(&v, false), "blocked");
+        v.exact = false;
+        assert_eq!(state_for_view(&v, true), "blocked");
+        v.exact = true;
+        v.unavailable_code = "stale".into();
+        assert_eq!(state_for_view(&v, true), "blocked");
+        v.unavailable_code.clear();
+        for id in ["other", ""] {
+            let mut other = b.clone();
+            other.app_id = id.into();
+            v.blockers.push(other);
+            assert_eq!(state_for_view(&v, true), "blocked");
+            v.blockers.pop();
+        }
+        assert_eq!(derive_state(false, true, false, false, true), "blocked");
+    }
     #[test]
     fn paired_probes_need_input_evidence() {
         let mut probe = PairedProbe::default();

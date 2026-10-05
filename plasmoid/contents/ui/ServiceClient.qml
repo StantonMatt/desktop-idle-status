@@ -11,6 +11,10 @@ Item {
     readonly property string path: "/io/github/StantonMatt/DesktopIdleStatus"
     readonly property string iface: "io.github.StantonMatt.DesktopIdleStatus1"
     property var snapshot: ({})
+    property var ignorePending: Object.create(null)
+    property var ignoreErrors: Object.create(null)
+    property int ignoreAttempt: 0
+    property string ignoreSnapshot: ""
     property var history: []
     property bool historyFailed: false
     property bool clearHistoryFailed: false
@@ -201,6 +205,43 @@ Item {
                 client.returned(Number(unwrap(start)), Number(unwrap(end)), unwrap(windows));
         });
     }
+    function clearIgnoreErrors() { ignoreErrors = Object.create(null); }
+    function setAppIgnored(appId, ignored) {
+        if (!appId || !serviceOwner || ignorePending[appId] !== undefined) return;
+        const token = ++ignoreAttempt;
+        ignoreErrors = Object.assign(Object.create(null), ignoreErrors, {[appId]: ""});
+        ignorePending = Object.assign(Object.create(null), ignorePending, {[appId]: {token:token, ignored:ignored, acknowledged:false, deadline:Date.now() + 5000}});
+        guardedCall("SetAppIgnored", [appId, ignored], function() {
+            const pending = client.ignorePending[appId];
+            if (!pending || pending.token !== token) return;
+            client.ignorePending = Object.assign(Object.create(null), client.ignorePending, {[appId]: Object.assign({}, pending, {acknowledged:true})});
+            client.confirmIgnores(); client.refresh();
+        },
+            function() { client.failIgnore(appId, token); });
+    }
+    function failIgnore(appId, token) {
+        const pending = ignorePending[appId];
+        if (!pending || pending.token !== token) return;
+        const rows = snapshot.Blockers || [];
+        const row = rows.find(row => row.appId === appId);
+        const name = row ? row.appName || appId : appId;
+        ignoreErrors = Object.assign(Object.create(null), ignoreErrors, {[appId]: pending.ignored
+            ? qsTr("Couldn't ignore %1").arg(name) : qsTr("Couldn't stop ignoring %1").arg(name)});
+        const next = Object.assign(Object.create(null), ignorePending); delete next[appId]; ignorePending = next;
+    }
+    onSnapshotChanged: {
+        const serialized = JSON.stringify(snapshot);
+        if (serialized !== ignoreSnapshot) { clearIgnoreErrors(); ignoreSnapshot = serialized; }
+        confirmIgnores();
+    }
+    function confirmIgnores() {
+        const next = Object.assign(Object.create(null), ignorePending);
+        for (const id of Object.keys(next)) {
+            const ignored = (snapshot.IgnoredApps || []).includes(id);
+            if (next[id].acknowledged && ignored === next[id].ignored) delete next[id];
+        }
+        ignorePending = next;
+    }
     function activateWindow(id) { guardedCall("ActivateWindow", [id]); }
 
     onServiceOwnerChanged: {
@@ -216,6 +257,7 @@ Item {
             service: serviceOwner,
             ownerToken: Object.freeze({generation: generation, owner: serviceOwner})
         });
+        ignorePending = Object.create(null); clearIgnoreErrors();
         fetching = false;
         refreshPending = false;
         readRetryCount = 0;
@@ -265,6 +307,15 @@ Item {
         onNewData: (sourceName, data) => {
             disconnectSource(sourceName);
             client.finishServiceCommand(sourceName, data["exit code"]);
+        }
+    }
+    Timer {
+        interval: 250; running: Object.keys(client.ignorePending).length > 0; repeat: true
+        onTriggered: {
+            for (const id of Object.keys(client.ignorePending)) {
+                const pending = client.ignorePending[id];
+                if (Date.now() >= pending.deadline) client.failIgnore(id, pending.token);
+            }
         }
     }
     Timer { id: loadingDeadline; interval: 5000; onTriggered: { client.loading = false; client.available = false; } }

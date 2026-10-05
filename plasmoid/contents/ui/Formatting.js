@@ -67,6 +67,21 @@ function dayDistance(seconds, now) {
 function time(seconds, locale, pattern) { return new Date(seconds * 1000).toLocaleTimeString(locale, pattern || locale.timeFormat(1)); }
 function shortDay(seconds, locale) { return new Date(seconds * 1000).toLocaleDateString(locale, "ddd"); }
 function shortDate(seconds, locale) { return new Date(seconds * 1000).toLocaleDateString(locale, "d MMM"); }
+function statusTitle(state) {
+    return state === "ready" ? qsTr("Screensaver will start")
+        : state === "blocked" || state === "screensaver-off" ? qsTr("Screensaver won't start")
+        : state === "late" ? qsTr("Screensaver starts too late")
+        : state === "running" ? qsTr("Screensaver is running") : qsTr("Screensaver status unknown");
+}
+function activeBlockers(rows) { return blockers(rows || []).filter(row => row.ignored !== true); }
+function blockedTooltip(rows, namesText) {
+    const active = activeBlockers(rows);
+    // A blocked service snapshot can retain ignored inhibitors when bypass is
+    // unavailable. Keep the tooltip consistent with that authoritative state.
+    const names = distinctNames(active.length ? active : blockers(rows || []));
+    return names.length ? qsTr("Blocked by %1").arg(namesText(names, false))
+        : qsTr("Blocked by an unidentified window");
+}
 function blockers(rows) {
     return rows.slice().sort((a, b) => Number(a.since) - Number(b.since)
         || appName(a).localeCompare(appName(b)) || String(a.caption || "").localeCompare(String(b.caption || ""))

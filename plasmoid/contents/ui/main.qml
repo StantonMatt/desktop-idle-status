@@ -21,10 +21,7 @@ PlasmoidItem {
     readonly property var timeLocale: Qt.locale()
     readonly property string timePattern: timeLocaleProvider.pattern
     property double now: Date.now() / 1000
-    readonly property string mainText: state === "ready" ? qsTr("Screensaver will start")
-        : state === "blocked" || state === "screensaver-off" ? qsTr("Screensaver won't start")
-        : state === "late" ? qsTr("Screensaver starts too late")
-        : state === "running" ? qsTr("Screensaver is running") : qsTr("Screensaver status unknown")
+    readonly property string mainText: Format.statusTitle(state)
     // Plasma supplies KI18n's plural-aware functions through its QML context.
     // qmllint disable unqualified
     readonly property string timeoutText: Number(snapshot.ScreensaverTimeout) > 0
@@ -42,8 +39,7 @@ PlasmoidItem {
     toolTipTextFormat: Text.PlainText
     toolTipMainText: mainText
     toolTipSubText: state === "loading" ? "" : state === "service-down" ? qsTr("The Desktop Idle Status service isn't running")
-        : state === "blocked" ? (snapshot.Blockers || []).length ? qsTr("Blocked by %1").arg(namesText(Format.distinctNames(Format.blockers(snapshot.Blockers)), false))
-            : qsTr("Blocked by an unidentified window")
+        : state === "blocked" ? Format.blockedTooltip(snapshot.Blockers, root.namesText)
         : state === "late" ? settingTooltip(conflicts[0]) : statusSubtext
     Plasmoid.contextualActions: [clearAction]
     PlasmaCore.Action {
@@ -71,6 +67,7 @@ PlasmoidItem {
         }
     }
     onSnapshotChanged: syncBlockers()
+    onExpandedChanged: if (!root.expanded) client.clearIgnoreErrors()
     function namesText(names, notification) {
         if (names.length === 1) return names[0];
         if (names.length === 2) return qsTr("%1 and %2").arg(names[0]).arg(names[1]);

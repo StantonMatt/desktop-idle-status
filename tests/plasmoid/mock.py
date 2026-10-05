@@ -17,10 +17,23 @@ haruna = window('Haruna', 'haruna', 'big_buck_bunny_1080p.mkv', now-2100, 'harun
 def interval(row, start, end):
     return dict(row, start=start, end=end)
 history = [interval(firefox, now-24000, now-4200), interval(haruna, now-86400, now-81900), interval(chrome, now-90000, now-87300)]
-props = dict(State='ready', ExactAttribution=True, UnavailableCode='', UnavailableReason='', ScreensaverTimeout=600,
+props = dict(IgnoredApps=[], State='ready', ExactAttribution=True, UnavailableCode='', UnavailableReason='', ScreensaverTimeout=600,
              Blockers=[], BlockedUnattributed=False, LockSleepBlockers=[], TimeoutConflicts=[], RunningSince=0, ScreensaverOffReason='')
 if state.startswith('blocked') or state == 'long':
     props['State']='blocked'; props['Blockers']=[firefox] if state=='blocked-one' else [chrome, haruna, firefox]
+if state.startswith('ignore-'):
+    claude = window('Claude', 'claude-desktop', '', now-3600, 'claude-id')
+    claude['appId'] = 'claude'
+    claude['ignored'] = state not in ['ignore-action', 'ignore-error']
+    chrome['ignored'] = False
+    props.update(State='blocked' if state in ['ignore-action', 'ignore-error', 'ignore-mixed', 'ignore-long', 'ignore-unavailable'] else 'ready',
+                 Blockers=[claude, chrome] if state in ['ignore-action', 'ignore-error', 'ignore-mixed', 'ignore-long'] else [claude],
+                 IgnoredApps=['claude'] if claude['ignored'] else [],
+                 LockSleepBlockers=[dict(appName='Claude',reason='Electron',what='sleep',iconName='claude-desktop',source='powerdevil',mode='block')])
+    if state == 'ignore-long':
+        chrome['caption'] = 'Quarterly planning review and roadmap — a long window title'
+        game = window('steam_app_367520', 'application-x-executable', 'Hollow Knight', now-1800, 'game-id')
+        game['ignored'] = True; props['Blockers'].append(game); props['IgnoredApps'].append(game['appId'])
 if state=='unidentified':
     props.update(State='blocked', ExactAttribution=False, BlockedUnattributed=True, UnavailableCode='bridge-missing', UnavailableReason='KWin bridge missing or not loaded')
     history.insert(0, interval(window('Unidentified window','preferences-system-windows','',0,'unattributed'), now-25000, now-6400))
@@ -64,15 +77,16 @@ if state in ['caption-empty', 'caption-same', 'caption-case', 'caption-containin
     history = [interval(firefox, now-3600, now)]
 if state == 'retention':
     history = [interval(firefox, now-7*86400-3600, now-7*86400+60)]
-signatures={'State':'s','ExactAttribution':'b','UnavailableCode':'s','UnavailableReason':'s','ScreensaverTimeout':'u','Blockers':'aa{sv}','BlockedUnattributed':'b','LockSleepBlockers':'aa{sv}','TimeoutConflicts':'aa{sv}','RunningSince':'x','ScreensaverOffReason':'s'}
+signatures={'State':'s','ExactAttribution':'b','UnavailableCode':'s','UnavailableReason':'s','ScreensaverTimeout':'u','Blockers':'aa{sv}','BlockedUnattributed':'b','LockSleepBlockers':'aa{sv}','TimeoutConflicts':'aa{sv}','RunningSince':'x','ScreensaverOffReason':'s','IgnoredApps':'as'}
 if state == 'timeout-missing':
     del signatures['ScreensaverTimeout']
     del props['ScreensaverTimeout']
 def rows(items):
     return [{k:GLib.Variant('b' if isinstance(v,bool) else 'u' if k == 'seconds' else 'x' if isinstance(v,int) else 's',v) for k,v in row.items()} for row in items]
-def variant(key,value): return GLib.Variant(signatures[key], rows(value) if isinstance(value,list) else value)
+def variant(key,value): return GLib.Variant(signatures[key], rows(value) if signatures[key] == 'aa{sv}' else value)
 xml='<node><interface name="'+IFACE+'">'+''.join(f'<property name="{k}" type="{v}" access="read"/>' for k,v in signatures.items())+'''
 <method name="History"><arg type="u" direction="in"/><arg type="aa{sv}" direction="out"/></method>
+<method name="SetAppIgnored"><arg type="s" direction="in"/><arg type="b" direction="in"/></method>
 <method name="ClearHistory"/><method name="ActivateWindow"><arg type="s" direction="in"/><arg type="b" direction="out"/></method>
 <method name="StartScreensaver"><arg type="b" direction="out"/></method>
 <method name="ClaimReturnNotice"><arg type="u" direction="in"/><arg type="b" direction="out"/></method>
@@ -96,7 +110,19 @@ def method(conn,sender,path,iface,name,args,invocation):
         elif name == 'ClearHistory': invocation.return_value(None)
         else: invocation.return_value(GLib.Variant('(b)', (False,)))
         return
-    if name=='History' and state == 'history-error':
+    if name == 'SetAppIgnored':
+        if state == 'ignore-error':
+            invocation.return_dbus_error(IFACE+'.Storage', 'injected preference failure')
+        else:
+            app_id, ignored = args.unpack()
+            ids = set(props['IgnoredApps'])
+            if ignored: ids.add(app_id)
+            else: ids.discard(app_id)
+            props['IgnoredApps'] = sorted(ids)
+            for row in props['Blockers']: row['ignored'] = row.get('appId') in ids
+            props['State'] = 'blocked' if (state == 'ignore-unavailable' and bool(props['Blockers'])) or any(not row.get('ignored', False) for row in props['Blockers']) else 'ready'
+            invocation.return_value(None); changed()
+    elif name=='History' and state == 'history-error':
         invocation.return_dbus_error(IFACE+'.Storage', 'RAW ERROR history storage detail')
     elif name=='ClearHistory' and state == 'clear-error':
         invocation.return_dbus_error(IFACE+'.Storage', 'RAW ERROR clear storage detail')

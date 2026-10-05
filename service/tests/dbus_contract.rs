@@ -2,7 +2,7 @@
 use desktop_idle_status::{
     adapters,
     api::{self, Row, s},
-    history::{Entry, Store},
+    history::{Entry, Store, Tracker},
     identity::DesktopIndex,
     model::Blocker,
 };
@@ -422,6 +422,30 @@ fn private_bus_contract() {
             .unwrap();
         wait_property(&proxy, "State", "blocked".to_owned()).await;
         wait_property(&proxy, "UnavailableCode", String::new()).await;
+        assert!(proxy.call::<_, _, ()>("SetAppIgnored", &("", true)).await.is_err());
+        proxy.call::<_, _, ()>("SetAppIgnored", &("test-app", true)).await.unwrap();
+        let ignored: Vec<String> = proxy.get_property("IgnoredApps").await.unwrap();
+        assert_eq!(ignored, vec!["test-app"]);
+        let blockers: Vec<Row> = proxy.get_property("Blockers").await.unwrap();
+        assert!(bool::try_from(&blockers[0]["ignored"]).unwrap());
+        // No Wayland here, so input tracking is unavailable and ignoring can't bypass the block.
+        assert_eq!(proxy.get_property::<String>("State").await.unwrap(), "blocked");
+        let preferences = desktop_idle_status::preferences::Preferences::load(
+            &desktop_idle_status::paths::environment().home("XDG_CONFIG_HOME", ".config").unwrap()).unwrap();
+        assert!(preferences.ignored.contains("test-app"));
+        proxy.call::<_, _, ()>("SetAppIgnored", &("test-app", false)).await.unwrap();
+        wait_property(&proxy, "State", "blocked".to_owned()).await;
+        let config_home=desktop_idle_status::paths::environment().home("XDG_CONFIG_HOME", ".config").unwrap();
+        let preferences_path=config_home.join("desktop-idle-statusrc");
+        let previous=std::fs::read(&preferences_path).unwrap();
+        std::fs::remove_file(&preferences_path).unwrap();
+        std::fs::create_dir(&preferences_path).unwrap();
+        assert!(proxy.call::<_, _, ()>("SetAppIgnored", &("test-app", true)).await.is_err());
+        assert_eq!(proxy.get_property::<String>("State").await.unwrap(), "blocked");
+        assert!(proxy.get_property::<Vec<String>>("IgnoredApps").await.unwrap().is_empty());
+        std::fs::remove_dir(&preferences_path).unwrap();
+        std::fs::write(&preferences_path,previous).unwrap();
+
         assert!(
             proxy
                 .get_property::<bool>("ExactAttribution")
@@ -742,6 +766,8 @@ fn private_bus_contract() {
             )),
             store: Store::open(&data.join("local"), adapters::now()).unwrap(),
             tracker: Default::default(),
+            preferences: Default::default(),
+            activation: Default::default(),
             tracking_input: (false, false),
             notices: Default::default(),
         }));
@@ -2188,6 +2214,8 @@ fn private_bus_coherent_validation() {
             generation: 0,
             store: Store::open(&data_home, adapters::now()).unwrap(),
             tracker: Default::default(),
+            preferences: Default::default(),
+            activation: Default::default(),
             tracking_input: (false, false),
             notices: Default::default(),
         }));
@@ -2369,5 +2397,92 @@ fn private_bus_coherent_validation() {
             widget_proxy.call::<_, _, ()>("ClearHistory", &()).await.unwrap();
             changes.recv().await.unwrap();
         }
+    });
+}
+
+struct PreviewSaver(Arc<Mutex<u32>>);
+#[zbus::interface(name = "org.kde.PlasmaVisualScreensaver")]
+impl PreviewSaver {
+    fn preview(&self) {
+        *self.0.lock().unwrap() += 1;
+    }
+}
+#[test]
+fn private_bus_ignore_preview_guard() {
+    if !private_bus_test("private_bus_ignore_preview_guard") {
+        return;
+    }
+    tokio::runtime::Runtime::new().unwrap().block_on(async {
+        let fake = Connection::session().await.unwrap();
+        let calls = Arc::new(Mutex::new(0));
+        fake.object_server()
+            .at("/PlasmaVisualScreensaver", PreviewSaver(calls.clone()))
+            .await
+            .unwrap();
+        fake.request_name(adapters::SAVER_NAME).await.unwrap();
+        let config = desktop_idle_status::config::Config {
+            timeout: 60,
+            conflicts: vec![],
+        };
+        let mut view = desktop_idle_status::model::view(&config);
+        view.exact = true;
+        view.unavailable_code.clear();
+        view.state = "ready".into();
+        view.ignored_apps = vec!["app".into()];
+        view.blockers.push(Blocker {
+            internal_id: "a".into(),
+            app_id: "app".into(),
+            app_name: "App".into(),
+            icon_name: String::new(),
+            caption: String::new(),
+            since: 1,
+        });
+        let home = desktop_idle_status::paths::environment()
+            .home("XDG_DATA_HOME", ".local/share")
+            .unwrap();
+        let mut d = api::Data {
+            view: view.clone(),
+            generation: 0,
+            store: Store::open(&home, 100).unwrap(),
+            tracker: Tracker::default(),
+            tracking_input: (true, true),
+            notices: Default::default(),
+            preferences: Default::default(),
+            activation: Default::default(),
+        };
+        d.activation.observe(true, true);
+        assert!(d.activation.eligible(&view));
+        let data = Arc::new(Mutex::new(d));
+        let client = Connection::session().await.unwrap();
+        let owner = fake.unique_name().unwrap().to_string();
+        desktop_idle_status::activation::preview(&client, &owner, &data, 0)
+            .await
+            .unwrap();
+        assert_eq!(*calls.lock().unwrap(), 1);
+        assert!(!data.lock().unwrap().activation.eligible(&view));
+        data.lock().unwrap().set_view(view.clone());
+        desktop_idle_status::activation::preview(&client, &owner, &data, 0)
+            .await
+            .unwrap();
+        assert_eq!(
+            *calls.lock().unwrap(),
+            1,
+            "stale asynchronous work must not activate"
+        );
+        data.lock().unwrap().activation.observe(false, true);
+        desktop_idle_status::activation::preview(&client, &owner, &data, 1)
+            .await
+            .unwrap();
+        assert_eq!(
+            *calls.lock().unwrap(),
+            1,
+            "resume before dispatch must prevent activation"
+        );
+        data.lock().unwrap().activation.observe(true, true);
+        assert!(data.lock().unwrap().activation.eligible(&view));
+        desktop_idle_status::activation::preview(&client, &owner, &data, 1)
+            .await
+            .unwrap();
+        assert_eq!(*calls.lock().unwrap(), 2);
     });
 }

@@ -8,6 +8,37 @@ TestCase {
     id: test
     name: "Formatting"
     Widget.ServiceClient { id: client }
+    function test_ignore_keeps_row_order_and_filters_tooltip_names() {
+        const rows = [{internalId:"a",appName:"Claude",since:1,ignored:true},
+            {internalId:"b",appName:"Google Chrome",since:2,ignored:false}];
+        compare(Format.blockers(rows)[0].internalId,"a");
+        compare(Format.distinctNames(Format.activeBlockers(rows)).join(","),"Google Chrome");
+        rows[1].ignored=true; compare(Format.activeBlockers(rows).length,0);
+    }
+    function test_blocked_tooltip_data() {
+        const ignored = {appName:"Claude", ignored:true};
+        return [
+            {tag:"mixed", rows:[ignored, {appName:"Google Chrome"}], expected:"Blocked by Google Chrome"},
+            {tag:"only-ignored", rows:[ignored], expected:"Blocked by Claude"},
+            {tag:"multiple-ignored", rows:[ignored, {appName:"Chrome", ignored:true}], expected:"Blocked by Chrome and Claude"},
+            {tag:"empty", rows:[], expected:"Blocked by an unidentified window"},
+            {tag:"missing", rows:undefined, expected:"Blocked by an unidentified window"},
+            {tag:"unnamed", rows:[{unidentified:true}], expected:"Blocked by an unidentified window"},
+            {tag:"duplicates", rows:[ignored, {appName:"Firefox"}, {appName:"Firefox"}, {appName:"Chrome"}], expected:"Blocked by Chrome and Firefox"}
+        ];
+    }
+    function test_blocked_tooltip(data) {
+        function namesText(names, notification) {
+            compare(notification, false);
+            verify(names.length > 0);
+            return names.join(" and ");
+        }
+        compare(Format.blockedTooltip(data.rows, namesText), data.expected);
+    }
+    function test_blocked_header_with_ignored_inhibitors() {
+        compare(Format.statusTitle("blocked"), "Screensaver won't start");
+        compare(Format.statusTitle("ready"), "Screensaver will start");
+    }
     function test_caption() {
         compare(Format.caption({appName:"Firefox",caption:"YouTube — Firefox"}),"YouTube — Firefox");
         compare(Format.caption({appName:"Firefox",caption:"YouTube - Firefox"}),"YouTube - Firefox");

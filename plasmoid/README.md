@@ -2,7 +2,11 @@
 
 Plasma 6.6+ system-tray applet for the session-bus service described in
 `../docs/service-dbus.md`. The applet stays active in every state; the user can
-choose its tray visibility with Plasma's normal tray settings. It has no settings.
+choose its tray visibility with Plasma's normal tray settings. App rows offer
+**Ignore** / **Stop Ignoring** for screensaver blockers; the service persists
+these app-wide preferences. Ignored apps are excluded from new blocking history
+and, with input-only idle tracking and exact attribution available, from blocker
+status and tray counts. Sleep blockers are unaffected.
 
 All production code is QML/JavaScript. The installed
 `org.kde.plasma.workspace.dbus` module supplies async method calls, owner watching
