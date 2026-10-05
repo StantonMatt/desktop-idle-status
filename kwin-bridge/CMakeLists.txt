@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(desktop_idle_status_kwin_bridge VERSION 0.1.0 LANGUAGES CXX)
+project(desktop_idle_status_kwin_bridge VERSION 0.1.1 LANGUAGES CXX)
 
 # Only distribution packages opt in. Development builds stay disabled.
 option(DESKTOP_IDLE_STATUS_BRIDGE_ENABLED_BY_DEFAULT "Enable bridge at KWin startup" OFF)

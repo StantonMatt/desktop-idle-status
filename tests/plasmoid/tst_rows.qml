@@ -27,10 +27,13 @@ TestCase {
         property var conflicts: []
         property var history: []
         property var policies: [{appName:"<b>App</b>", reason:"<b>Reason</b>", what:"sleep"}]
+        property var timeLocale: Qt.locale("es_CL")
+        property string timePattern: "HH:mm"
         property bool expanded: true
         function since(seconds) { return "Since 12:00"; }
         function settingText(setting) { return setting; }
         function policyText(row) { return row.appName + " " + row.reason; }
+        function day(seconds) { return "Today"; }
     }
     QtObject {
         id: client
@@ -52,7 +55,7 @@ TestCase {
         return found;
     }
     function init() {
-        controller.state = "ready"; controller.blockerModel = []; controller.conflicts = [];
+        controller.state = "ready"; controller.blockerModel = []; controller.conflicts = []; controller.history = [];
         client.activated = []; client.historyFailed = false; client.clearHistoryFailed = false;
     }
     function test_keyboard_activation_data() {
@@ -134,6 +137,42 @@ TestCase {
         compare(findChild(row, "rowCaption").text, row.caption);
         compare(findChild(row, "rowTooltip").textFormat, Text.PlainText);
         compare(findChild(row, "rowTooltip").text, row.name + "\n" + row.caption);
+    }
+    function test_caption_presentations_data() {
+        const cases = [
+            {tag:"empty", caption:"", expected:""},
+            {tag:"whitespace", caption:" \t ", expected:""},
+            {tag:"equal", caption:"Claude", expected:""},
+            {tag:"trimmed-case", caption:" \tcLaUdE ", expected:""},
+            {tag:"contains", caption:"Chat with Claude", expected:"Chat with Claude"}
+        ];
+        const rows = [];
+        for (const historyRow of [false, true])
+            for (const data of cases)
+                rows.push(Object.assign({}, data, {tag:(historyRow ? "history-" : "blocker-") + data.tag, historyRow:historyRow}));
+        return rows;
+    }
+    function test_caption_presentations(data) {
+        const record = {appName:"Claude", caption:data.caption, internalId:"claude", since:1, start:1, end:3601};
+        controller.state = "blocked";
+        if (data.historyRow) controller.history = [record];
+        else controller.blockerModel = [{record:record}];
+        const full = createTemporaryObject(fullComponent, test, {controller:controller, client:client});
+        verify(full);
+        let row;
+        tryVerify(() => {
+            row = objects(full).find(item => item.name === "Claude" && item.historyRow === data.historyRow);
+            return !!row;
+        });
+        compare(row.caption, data.expected);
+        const caption = findChild(row, "rowCaption"), name = findChild(row, "rowName");
+        compare(caption.text, data.expected);
+        compare(caption.visible, !!data.expected);
+        compare(findChild(row, "rowTooltip").text, "Claude" + (data.expected ? "\n" + data.expected : ""));
+        if (!data.expected) {
+            // Centre the sole name line even alongside two-line history times.
+            tryVerify(() => Math.abs(name.mapToItem(row.contentItem, 0, name.height / 2).y - row.contentItem.height / 2) <= 1);
+        }
     }
     function test_history_errors_and_plain_policies() {
         const full = createTemporaryObject(fullComponent, test, {controller:controller, client:client});

@@ -3,7 +3,7 @@
         "Name": "Desktop Idle Status KWin Bridge",
         "Description": "Expose effective and latent Wayland idle inhibitors over D-Bus",
         "License": "GPL-3.0-or-later",
-        "Version": "0.1.0",
+        "Version": "0.1.1",
         "EnabledByDefault": false
     }
 }

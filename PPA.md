@@ -44,7 +44,7 @@ listed in `debian/control`, and `devscripts`, `lintian`, `dput`, `gnupg`,
 when working on a development desktop. No package installation is necessary
 on the host for the container workflow below.
 
-Upstream version **0.1.0** is checked across both CMake projects, both plugin
+The upstream version is checked across both CMake projects, both plugin
 metadata files, Cargo.toml, Cargo.lock and debian/changelog. Run:
 
 ```sh
@@ -52,11 +52,11 @@ scripts/check-versions.py
 scripts/build-ppa-source.sh
 ```
 
-The default upstream ref is `refs/tags/v0.1.0` (a branch with that name is
+The default upstream ref is `refs/tags/v<VERSION>` (a branch with that name is
 rejected). The script pins the resolved commit and exports it without
 `debian/`, overlays the current packaging, and builds a 3.0 (quilt) source.
 Crates are vendored from the exported, committed `service/Cargo.lock` into
-`desktop-idle-status_0.1.0.orig-vendor.tar.xz`. Only vendoring requires network.
+`desktop-idle-status_<VERSION>.orig-vendor.tar.xz`. Only vendoring requires network.
 Debian generates a private Cargo source-replacement config, uses an empty
 Cargo home, and builds/tests with `--frozen` and `CARGO_NET_OFFLINE=true`.
 The crate license texts and source attributions are added to the generated
@@ -78,7 +78,7 @@ builds invoked by the source script run through `heavy`. To build an existing
 source separately:
 
 ```sh
-heavy scripts/build-deb.sh dist/ppa/desktop-idle-status_0.1.0-1ppa1~resolute1.dsc dist/ppa
+heavy scripts/build-deb.sh dist/ppa/desktop-idle-status_<VERSION>-1ppa1~resolute1.dsc dist/ppa
 ```
 
 For committed validation before the tag exists:
@@ -109,7 +109,7 @@ networking disabled. For an image named `desktop-idle-status-build`:
 ```sh
 heavy docker run --rm --network none \
   -v "$PWD/dist/ppa:/artifacts" desktop-idle-status-build \
-  sh -ec 'mkdir /build; cd /build; dpkg-source -x /artifacts/desktop-idle-status_0.1.0-1ppa1~resolute1.dsc source; cd source; dpkg-buildpackage -b -us -uc; cd ..; lintian --fail-on error ./*.changes; cp ./*.deb ./*.changes ./*.buildinfo /artifacts/'
+  sh -ec 'mkdir /build; cd /build; dpkg-source -x /artifacts/desktop-idle-status_<VERSION>-1ppa1~resolute1.dsc source; cd source; dpkg-buildpackage -b -us -uc; cd ..; lintian --fail-on error ./*.changes; cp ./*.deb ./*.changes ./*.buildinfo /artifacts/'
 ```
 
 Install the two regular `.deb` files using `apt install` in a separate clean
@@ -168,7 +168,7 @@ version do not change the IID. The check is read-only and uses Launchpad HTTPS;
 
 Whenever Ubuntu publishes a new libkwin6 **upstream** version, add a no-change
 changelog entry with a bumped PPA revision (for example
-`0.1.0-1ppa2~resolute1`) and the line
+`<VERSION>-1ppa2~resolute1`) and the line
 `Bridge built against libkwin6 NEW_VERSION.` Update the CMake minimum KWin
 requirement only if APIs require it. Build with the current archive's matching
 kwin-dev/libkwin6, verify IID and private-compositor behavior, review the changed

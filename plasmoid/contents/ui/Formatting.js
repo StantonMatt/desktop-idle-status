@@ -3,8 +3,12 @@
 .pragma library
 
 function appName(row) { return String(row.appName || row.appId || ""); }
-// Captions are already normalized by the service, including history/notices.
-function caption(row) { return String(row.caption || ""); }
+// The service normalizes title suffixes. Omit empty or redundant titles in
+// every presentation, while preserving titles that merely contain the name.
+function caption(row) {
+    const title = String(row.caption || ""), trimmed = title.trim();
+    return !trimmed || trimmed.toLowerCase() === appName(row).trim().toLowerCase() ? "" : title;
+}
 function distinctNames(rows) {
     const names = [];
     for (const row of rows) {
@@ -65,7 +69,7 @@ function shortDay(seconds, locale) { return new Date(seconds * 1000).toLocaleDat
 function shortDate(seconds, locale) { return new Date(seconds * 1000).toLocaleDateString(locale, "d MMM"); }
 function blockers(rows) {
     return rows.slice().sort((a, b) => Number(a.since) - Number(b.since)
-        || appName(a).localeCompare(appName(b)) || caption(a).localeCompare(caption(b))
+        || appName(a).localeCompare(appName(b)) || String(a.caption || "").localeCompare(String(b.caption || ""))
         || (a.internalId || "").localeCompare(b.internalId || ""));
 }
 function conflicts(rows) {

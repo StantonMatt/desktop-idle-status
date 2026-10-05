@@ -1,3 +1,12 @@
+desktop-idle-status (0.1.1-1ppa1~resolute1) resolute; urgency=medium
+
+  * Resolve PowerDevil and logind blocker names to installed applications
+    (desktop id, StartupWMClass, Exec binary, Name), with matching icons.
+  * Hide a window subtitle that only repeats the application name.
+  * Bridge built against libkwin6 4:6.6.6-0ubuntu0.1.
+
+ -- Matthew Stanton <stantonmatthewj@gmail.com>  Mon, 05 Oct 2026 13:00:00 -0300
+
 desktop-idle-status (0.1.0-1ppa1~resolute1) resolute; urgency=medium
 
   * Initial release: session service, Plasma widget and native KWin bridge.

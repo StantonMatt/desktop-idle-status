@@ -53,6 +53,11 @@ class SourceBuildTests(unittest.TestCase):
         for name in ('check-versions.py', 'vendor-copyright.py'):
             (self.repo / 'scripts' / name).write_text('# fixture: succeeds offline\n')
         shutil.copy2(ROOT / 'debian/changelog', self.repo / 'debian/changelog')
+        package_version = subprocess.run(
+            ['dpkg-parsechangelog', '-l' + str(self.repo / 'debian/changelog'), '-SVersion'],
+            text=True, capture_output=True, check=True, timeout=30).stdout.strip()
+        self.upstream_version = package_version.split(':', 1)[-1].split('-', 1)[0]
+        self.tag = 'v' + self.upstream_version
         (self.repo / 'debian/copyright').write_text('Fixture\n')
         (self.repo / 'payload').write_text('release commit\n')
         self.bin = self.root / 'bin'
@@ -79,8 +84,10 @@ printf '%s\\n' "$SOURCE_DATE_EPOCH" > "$last/fixture"
         executable(self.bin / 'dpkg-buildpackage', '''#!/bin/sh
 set -eu
 version=$(dpkg-parsechangelog -SVersion)
+upstream=${version#*:}
+upstream=${upstream%%-*}
 touch "../desktop-idle-status_${version}.dsc"
-printf 'Files:\\n 000 0 misc optional desktop-idle-status_0.1.0.orig-vendor.tar.xz\\n' > "../desktop-idle-status_${version}_source.changes"
+printf 'Files:\\n 000 0 misc optional desktop-idle-status_%s.orig-vendor.tar.xz\\n' "$upstream" > "../desktop-idle-status_${version}_source.changes"
 ''')
         executable(self.bin / 'dpkg-source', '''#!/bin/sh
 set -eu
@@ -103,50 +110,50 @@ fi
 
     def assert_built_release(self, result):
         self.assertEqual(result.returncode, 0, result.stderr)
-        archive = self.root / 'output/desktop-idle-status_0.1.0.orig.tar.xz'
+        archive = self.root / f'output/desktop-idle-status_{self.upstream_version}.orig.tar.xz'
         with tarfile.open(archive) as tar:
-            self.assertEqual(tar.extractfile('desktop-idle-status-0.1.0/payload').read(), b'release commit\n')
-        with tarfile.open(self.root / 'output/desktop-idle-status_0.1.0.orig-vendor.tar.xz') as tar:
+            self.assertEqual(tar.extractfile(f'desktop-idle-status-{self.upstream_version}/payload').read(), b'release commit\n')
+        with tarfile.open(self.root / f'output/desktop-idle-status_{self.upstream_version}.orig-vendor.tar.xz') as tar:
             self.assertTrue(all(member.mtime == 1700000000 for member in tar.getmembers()))
             self.assertEqual(tar.extractfile('vendor/fixture').read(), b'1700000000\n')
 
     def test_annotated_tag_build_path(self):
-        self.git('tag', '-a', 'v0.1.0', '-m', 'annotated release message')
+        self.git('tag', '-a', self.tag, '-m', 'annotated release message')
         self.assert_built_release(self.run_script())
 
     def test_branch_named_like_tag_rejected(self):
-        self.git('branch', 'v0.1.0')
+        self.git('branch', self.tag)
         result = self.run_script()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('refs/tags/v0.1.0', result.stderr)
-        self.assertFalse((self.root / 'output/desktop-idle-status_0.1.0.orig.tar.xz').exists())
+        self.assertIn(f'refs/tags/{self.tag}', result.stderr)
+        self.assertFalse((self.root / f'output/desktop-idle-status_{self.upstream_version}.orig.tar.xz').exists())
 
     def test_tag_wins_over_same_named_branch(self):
-        self.git('tag', 'v0.1.0')
+        self.git('tag', self.tag)
         (self.repo / 'payload').write_text('branch contents\n')
         self.git('add', 'payload')
         self.git('commit', '-qm', 'branch only')
-        self.git('branch', 'v0.1.0')
+        self.git('branch', self.tag)
         self.assert_built_release(self.run_script())
 
     def test_ref_is_pinned_before_archive_and_timestamp_is_numeric(self):
         real_git = shutil.which('git', path=os.environ['PATH'])
         # Move the tag after rev-parse; archive and timestamp must use its old SHA.
-        self.git('tag', 'v0.1.0')
+        self.git('tag', self.tag)
         (self.repo / 'payload').write_text('new commit\n')
         self.git('add', 'payload')
         self.git('commit', '-qm', 'new commit')
         executable(self.bin / 'git', f'''#!/bin/sh
 set -eu
 if [ "$3" = show ]; then
-    "{real_git}" -C "$2" tag -f v0.1.0 HEAD >/dev/null
+    "{real_git}" -C "$2" tag -f {self.tag} HEAD >/dev/null
 fi
 exec "{real_git}" "$@"
 ''')
         self.assert_built_release(self.run_script())
 
     def test_invalid_timestamp_rejected_before_archive(self):
-        self.git('tag', 'v0.1.0')
+        self.git('tag', self.tag)
         real_git = shutil.which('git', path=os.environ['PATH'])
         executable(self.bin / 'git', f'''#!/bin/sh
 if [ "$3" = show ]; then printf 'tag message\\n1700000000\\n'; exit 0; fi

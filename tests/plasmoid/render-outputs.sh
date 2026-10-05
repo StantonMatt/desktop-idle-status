@@ -34,7 +34,7 @@ for output in "$first" "$second"; do
         [[ -s "$prefix-$suffix" ]]
     done
     [[ -s "$output/light-overview.png" ]]
-    rg -q '^Screen locks after 20 seconds$' "$prefix-state.json"
-    rg -q 'NOTIFICATION ' "$prefix-mock.log"
+    grep -Eq '^Screen locks after 20 seconds$' "$prefix-state.json"
+    grep -Eq 'NOTIFICATION ' "$prefix-mock.log"
 done
 echo 'Concurrent render outputs remain isolated'

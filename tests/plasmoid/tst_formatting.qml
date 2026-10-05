@@ -14,6 +14,20 @@ TestCase {
         compare(Format.caption({appName:"Firefox",caption:"YouTube — Haruna"}),"YouTube — Haruna");
         compare(Format.caption({appId:"steam_app_367520",caption:""}),"");
     }
+    function test_caption_redundancy_data() {
+        return [
+            {tag:"missing", row:{appName:"Claude"}, expected:""},
+            {tag:"empty", row:{appName:"Claude", caption:""}, expected:""},
+            {tag:"whitespace", row:{appName:"Claude", caption:" \t\n "}, expected:""},
+            {tag:"equal", row:{appName:"Claude", caption:"Claude"}, expected:""},
+            {tag:"trimmed-case", row:{appName:" Claude ", caption:" \tcLaUdE\n"}, expected:""},
+            {tag:"app-id", row:{appId:"claude", caption:" CLAUDE "}, expected:""},
+            {tag:"contains", row:{appName:"Claude", caption:"Chat with Claude"}, expected:"Chat with Claude"},
+            {tag:"prefix", row:{appName:"Claude", caption:"Claude conversation"}, expected:"Claude conversation"},
+            {tag:"preserve-spacing", row:{appName:"Claude", caption:" Claude conversation "}, expected:" Claude conversation "}
+        ];
+    }
+    function test_caption_redundancy(data) { compare(Format.caption(data.row), data.expected); }
     function test_caption_service_normalization() {
         // The raw title was Report — Firefox — Firefox; the service removed
         // exactly one suffix. Preserve the remaining title in every presentation.
@@ -85,6 +99,13 @@ TestCase {
         compare(Format.history([{start:1},{start:3},{start:2}]).map(x=>x.start),[3,2,1]);
         compare(Format.policies([{appName:"Firefox",what:"idle"},{appName:"Firefox",what:"sleep"}])[0].what,"idle:sleep");
         compare(Format.policies([{appName:"Haruna"},{appName:"Elisa"}]).map(x=>x.appName),["Elisa","Haruna"]);
+    }
+    function test_blocker_caption_order() {
+        // Hiding a redundant caption must not change the window-title tie break.
+        compare(Format.blockers([
+            {since:1, appName:"Claude", caption:"Claude", internalId:"a"},
+            {since:1, appName:"Claude", caption:"", internalId:"z"}
+        ]).map(row => row.internalId), ["z", "a"]);
     }
     function test_days() {
         const now=new Date(2026,9,4,12).getTime()/1000;

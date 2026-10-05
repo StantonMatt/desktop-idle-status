@@ -55,6 +55,13 @@ if state == 'caption':
     firefox['caption'] = 'Report — Firefox'
     props.update(State='blocked', Blockers=[firefox])
     history = [interval(firefox, now-3600, now)]
+if state in ['caption-empty', 'caption-same', 'caption-case', 'caption-containing']:
+    firefox.update(appName='Claude', iconName='application-x-executable', caption={
+        'caption-empty': '', 'caption-same': 'Claude', 'caption-case': ' \tcLaUdE ',
+        'caption-containing': 'Chat with Claude',
+    }[state])
+    props.update(State='blocked', Blockers=[firefox])
+    history = [interval(firefox, now-3600, now)]
 if state == 'retention':
     history = [interval(firefox, now-7*86400-3600, now-7*86400+60)]
 signatures={'State':'s','ExactAttribution':'b','UnavailableCode':'s','UnavailableReason':'s','ScreensaverTimeout':'u','Blockers':'aa{sv}','BlockedUnattributed':'b','LockSleepBlockers':'aa{sv}','TimeoutConflicts':'aa{sv}','RunningSince':'x','ScreensaverOffReason':'s'}
@@ -174,7 +181,7 @@ def notice():
     unclaimed_notices.add(notice_id)
     windows = [{key:row[key] for key in ['appName', 'iconName', 'caption']} | dict(seconds=seconds)
                for row,seconds in [(haruna,19800), (firefox,600)]]
-    if state in ['caption', 'markup']:
+    if state.startswith('caption') or state == 'markup':
         windows = [dict(appName=firefox['appName'], iconName=firefox['iconName'], caption=firefox['caption'], seconds=19800)]
     if state == 'unidentified':
         windows = [dict(appName='Unidentified window', iconName='preferences-system-windows', caption='', seconds=19800)]

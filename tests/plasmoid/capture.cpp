@@ -24,6 +24,29 @@ static QObject *findNamed(QQuickItem *item, const QString &name) {
     for (auto *child : item->childItems()) if (auto *found = findNamed(child,name)) return found;
     return nullptr;
 }
+static int verifyCaptionRows(QQuickItem *item, const QString &name, const QString &caption) {
+    int count = 0;
+    if (item->property("historyRow").isValid() && item->property("name").toString() == name) {
+        auto *label = findNamed(item, "rowCaption");
+        auto *tooltip = findNamed(item, "rowTooltip");
+        const QString tip = name + (caption.isEmpty() ? QString() : "\n" + caption);
+        if (item->property("caption").toString() != caption || !label || !tooltip
+            || label->property("text").toString() != caption
+            || label->property("visible").toBool() != !caption.isEmpty()
+            || tooltip->property("text").toString() != tip)
+            qFatal("Caption row or tooltip did not omit only redundant titles");
+        if (caption.isEmpty()) {
+            auto *title = qobject_cast<QQuickItem *>(findNamed(item, "rowName"));
+            auto *content = item->property("contentItem").value<QQuickItem *>();
+            if (!title || !content || qAbs(title->mapToItem(content, QPointF(0, title->height() / 2)).y()
+                                          - content->height() / 2) > 1)
+                qFatal("Single-line name was not vertically centred");
+        }
+        ++count;
+    }
+    for (auto *child : item->childItems()) count += verifyCaptionRows(child, name, caption);
+    return count;
+}
 static void saveItem(QQuickItem *item, const QString &suffix, std::function<void()> next) {
     if (!item) { qFatal("Missing %s representation", qPrintable(suffix)); }
     auto grab = item->grabToImage();
@@ -73,6 +96,15 @@ static void findRoot() {
             root->setProperty("expanded", true);
             QTimer::singleShot(500, [] {
                 auto *full = root->property("fullRepresentationItem").value<QQuickItem *>();
+                const QString fixture = qEnvironmentVariable("DIS_TEST_STATE");
+                if (fixture.startsWith("caption")) {
+                    const QString name = fixture == "caption" ? "Firefox" : "Claude";
+                    const QString caption = fixture == "caption" ? "Report — Firefox"
+                        : fixture == "caption-containing" ? "Chat with Claude" : "";
+                    if (verifyCaptionRows(full, name, caption) != 2)
+                        qFatal("Expected both blocker and history caption rows");
+                    qInfo("CAPTION rows and tooltips verified");
+                }
                 if (qEnvironmentVariable("DIS_TEST_STATE") == "history-error") {
                     auto *status = findNamed(full, "historyStatus");
                     if (!status || !status->property("visible").toBool() || status->property("text").toString() != "Couldn't read history")

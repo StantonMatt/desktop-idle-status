@@ -70,7 +70,85 @@ Order is `since`, app name, caption, then UUID. A caption change preserves
 `since`. A window that becomes ineffective and later returns gets a new
 `since`. The service cannot reconstruct inhibitor acquisition times before
 it started. Desktop lookup honors `XDG_DATA_HOME` then `XDG_DATA_DIRS`, including
-nested desktop-file IDs. This initial implementation reads unlocalized `Name`.
+nested desktop-file IDs. Names and icons use the message locale (`LC_ALL`,
+`LC_MESSAGES`, then `LANG`) with Desktop Entry locale fallback to base values.
+
+All identity hints use one desktop index. Matching tries, in order: desktop ID
+(case-insensitive, with or without `.desktop`), `StartupWMClass`, `Exec` binary
+basename, localized/base `Name`, then localized/base `Icon`. Bridge hints are
+checked in desktop-file, app-ID, resource-class, executable-path order within
+each rule. Absolute paths also supply their basename as an additional candidate,
+including for desktop IDs whose `Exec` uses a different launcher. PowerDevil and
+logind `who` strings use the same rules; an unmatched `who` is preserved verbatim
+with `application-x-executable`.
+
+`Exec` lookup extracts applications from absolute/quoted paths, leading
+environment assignments and the launcher table below. All supported launchers
+share a table-driven option parser: exact long names, short flag clusters,
+attached short operands (`-n5`), separate required operands, `--option=value`,
+optional operands attached with `=`, and `--` where documented. Parsing stops at
+the application boundary; application arguments never supply aliases or override
+launcher options. `env` also accepts assignments among its options before that
+boundary, as verified with the installed implementation. A short and its long
+spelling share one canonical key; repeated options retain only their final value.
+Only the final Flatpak `--command` supplies a command alias.
+
+| Launcher | Option/positional grammar and exercised forms |
+| --- | --- |
+| `env` | Flags `-i`, `-v`; required `-u`, `-C`, `-f`, `-a`; optional `--ignore-signal[=SIG]`, `--default-signal[=SIG]`, `--block-signal[=SIG]`; `--list-signal-handling`; bare `-`; `NAME=VALUE`; `-iv`, `-uNAME`, repeated `-a`/`--argv0`, `--` |
+| `nice` | Required `-n`/`--adjustment`; signed numeric values, `-n5`, `-n 5`, `--adjustment=5`, historical `-5`/`--5`/`-+5`, repeated adjustments, `--` |
+| `ionice` | Required `-c`/`--class`, `-n`/`--classdata`; flag `-t`/`--ignore`; `-tc2`, `-n4`, repeated class, `--`; process/group/user selector forms rejected |
+| `dbus-run-session` | Required `--dbus-daemon` and `--config-file`, separate or `=` operands, repeated daemon, `--` |
+| `dbus-launch` | Documented syntax, stderr and session/X11 flags; `--config-file=FILE` only; repeated config; undocumented `--` and autolaunch rejected |
+| `setsid` | Flags `-c`/`--ctty`, `-f`/`--fork`, `-w`/`--wait`; `-cfw`, repeated fork, `--` |
+| `nohup` | Command with no launcher options, optional `--`; command's own `--help` remains an argument |
+| `systemd-run` | Installed help's complete flag/required-operand table, including `-qGd`, `-uUNIT`, `-pNAME=VALUE`, `-ENAME=VALUE`, boolean `--expand-environment=BOOL`, timer/path/socket operands, repeated unit and `--`; `-S`/`--shell` rejected |
+| `taskset` | Flags `-c`/`--cpu-list`, `-a`/`--all-tasks`, `-p`/`--pid`; always one mask/list positional before the command; `-c -- 0,1 app`, `-c -a 0,1 app`, `-ac 0-31:2,33 app`, `-- ff app`, repeated flags; all `-p` forms rejected |
+| `flatpak run` | Installed help's complete flag/required-operand table; `-udpv`, `--arch=ARCH`, `--branch BRANCH`, repeated `--command=old --command=new`, `--`; ref parsed as `APP_ID[/ARCH[/BRANCH]]`, supplying only `APP_ID`, never the basename `BRANCH` |
+| `snap run` | Documented `--debug-log`/`--trace-exec` flags, repeated flags, `--`, snap application identifier; shell/debugger forms and undocumented internal options rejected |
+
+The authoritative option arities are `LAUNCHERS` in `service/src/identity.rs`.
+They were checked on this system against `--help` and installed man pages:
+uutils coreutils 0.10.0 (`env`, `nice`, `nohup`), util-linux 2.41.3 (`ionice`,
+`setsid`, `taskset`), D-Bus 1.16.2, systemd 259.5, Flatpak 1.16.6, and Snap
+2.77.1. Help probes also confirmed that Flatpak `--commit`, `--runtime-commit`
+and `--instance-id-fd` consume an operand despite omitting `=VALUE` in help.
+No launcher commands are executed during identity resolution.
+
+Unknown/abbreviated options, missing/empty operands, values attached to flags,
+malformed masks/lists/refs, field codes in executable positions and forms without
+a command supply no aliases. Tests cover these failures for every launcher,
+plus nested wrappers and arguments after the command boundary. Runtime-dependent
+validity (for example whether a CPU or installation exists) is not evaluated.
+Flatpak application IDs and final explicit `--command` binaries are aliases;
+launcher names, overridden values, architecture/branch names and ordinary
+arguments are not. Unsupported forms fall through to other identity rules or
+the unchanged raw `who` string.
+
+`optirun`, `mangohud`, `gamemoderun`, `primusrun`, `prime-run` and `steam-run`
+were dropped because neither tools nor man pages are installed here to verify
+their option semantics. Their names are explicitly rejected so they cannot
+become wrapper aliases. All shell command/script prefixes (`sh`, `bash`, `dash`,
+`zsh`, `ksh`, `fish`, `csh`, `tcsh`), including `sh -c STRING [NAME [ARGS...]]`,
+remain unsupported: the command string and shell positional parameters never
+become executable aliases. `env -S`/`--split-string` is likewise rejected;
+its separate splitting/escape/environment-expansion language is not interpreted
+as ordinary command tokenization. `env -0` cannot launch a command. Snap's
+`--shell`, `--strace`, `--gdbserver` and undocumented internal `--command`,
+`--hook`, `--revision`/`-r` forms are rejected rather than guessed.
+`Hidden` and `NoDisplay` entries remain eligible, including for exact ID
+matches. Equal-strength alias collisions prefer a listed entry, then XDG
+search order and stable path order. A higher-priority desktop ID replaces the
+lower-priority entry and all its aliases, even when hidden.
+
+Identity call sites are `adapters::bridge` → `DesktopIndex::resolve` and
+`Sources::apply` → `model::lock_blockers` → `DesktopIndex::policy` (both
+PowerDevil and logind). `api::Api::validated_view` also refreshes through
+`adapters::bridge`. History (`Data::observe_view` → `Tracker` → `Store`, then
+`Api::history`) and `BlockedWhileAway` (`notification::return_event` →
+`api::publish_return`) preserve those resolved bridge identities. Existing
+persisted history is not rewritten; unattributed rows retain their explicit
+“Unidentified window” identity.
 
 `LockSleepBlockers` dictionaries have string keys `appName`, `iconName`,
 `reason`, `what` (`idle` or `sleep`), `source` (`powerdevil` or `logind`), and
@@ -452,8 +530,8 @@ explicit Start Service action continues to use `systemctl --user start`.
 no methods exported, no notifications, then a printed snapshot and exit. Always
 set scratch `XDG_DATA_HOME` when using it against the real desktop.
 
-Checks (from `service/`): `cargo build`, `cargo test --all-targets`,
-`cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.
+Checks (from `service/`): `cargo build`, `heavy cargo test --all-targets`,
+`heavy cargo clippy --all-targets -- -D warnings` and `cargo fmt --check`.
 Filesystem-backed tests create temporary directories under
 `$DESKTOP_IDLE_STATUS_TEST_ROOT`, defaulting to
 `~/.cache/agent-scratch/desktop-idle-status/service-tests/`.

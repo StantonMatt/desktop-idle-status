@@ -340,9 +340,18 @@ fn private_bus_contract() {
             .await
             .unwrap();
         fake.request_name("org.freedesktop.systemd1").await.unwrap();
-        let index = DesktopIndex::default();
+        let fixture_data = std::path::PathBuf::from(std::env::var_os("XDG_DATA_HOME").unwrap());
+        let applications = fixture_data.join("applications");
+        std::fs::create_dir_all(&applications).unwrap();
+        std::fs::write(applications.join("org.example.Test.desktop"),
+            "[Desktop Entry]\nName=Test\nExec=/bin/test %U\nIcon=test-resolved\n").unwrap();
+        std::fs::write(applications.join("org.example.Policy.desktop"),
+            "[Desktop Entry]\nName=Resolved Policy\nExec=/bin/Other\nIcon=policy-resolved\nNoDisplay=true\n").unwrap();
+        let index = DesktopIndex::from_dirs(vec![fixture_data]);
         let snapshot = adapters::bridge(&fake, &index, &[]).await.unwrap();
         assert_eq!(snapshot.blockers[0].caption, "Movie");
+        assert_eq!(snapshot.blockers[0].app_name, "Test");
+        assert_eq!(snapshot.blockers[0].icon_name, "test-resolved");
         let config = std::path::PathBuf::from(std::env::var_os("XDG_CONFIG_HOME").unwrap());
         let config_dirs = std::env::var_os("XDG_CONFIG_DIRS").unwrap();
         let system_config = std::env::split_paths(&config_dirs).last().unwrap();
@@ -422,7 +431,11 @@ fn private_bus_contract() {
         let blockers: Vec<Row> = proxy.get_property("Blockers").await.unwrap();
         assert_eq!(<&str>::try_from(&blockers[0]["caption"]).unwrap(), "Movie");
         let locks: Vec<Row> = proxy.get_property("LockSleepBlockers").await.unwrap();
+        assert_eq!(<&str>::try_from(&blockers[0]["appName"]).unwrap(), "Test");
+        assert_eq!(<&str>::try_from(&blockers[0]["iconName"]).unwrap(), "test-resolved");
         assert_eq!(locks.len(), 1, "logind import must be deduplicated");
+        assert_eq!(<&str>::try_from(&locks[0]["appName"]).unwrap(), "Resolved Policy");
+        assert_eq!(<&str>::try_from(&locks[0]["iconName"]).unwrap(), "policy-resolved");
         // Initial connection failed. Restore its socket path without a bus signal.
         let address = std::env::var("DBUS_SESSION_BUS_ADDRESS").unwrap();
         let socket = address

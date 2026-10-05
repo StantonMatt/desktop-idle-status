@@ -53,7 +53,7 @@ PC3.ItemDelegate {
         }
         ColumnLayout {
             Layout.fillWidth: true
-            Layout.alignment: row.caption.length || row.detail.length ? Qt.AlignTop : Qt.AlignVCenter
+            Layout.alignment: row.caption.length ? Qt.AlignTop : Qt.AlignVCenter
             spacing: 0
             PC3.Label { textFormat: Text.PlainText; id: nameLabel; objectName: "rowName"; text: row.name; elide: Text.ElideRight; Layout.fillWidth: true }
             PC3.Label { textFormat: Text.PlainText;
