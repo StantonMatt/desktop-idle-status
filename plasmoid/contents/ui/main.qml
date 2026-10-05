@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma ComponentBehavior: Bound
 import QtQuick
 import org.kde.plasma.plasmoid

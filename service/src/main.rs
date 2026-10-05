@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 use desktop_idle_status::{
     adapters::{self, now},
     api::{self, Api, Data},

@@ -1,0 +1,7 @@
+desktop-idle-status (0.1.0-1ppa1~resolute1) resolute; urgency=medium
+
+  * Initial release: session service, Plasma widget and native KWin bridge.
+  * Build offline from locked crates in a separate vendor orig component.
+  * Bridge built against libkwin6 4:6.6.6-0ubuntu0.1.
+
+ -- Matthew Stanton <stantonmatthewj@gmail.com>  Mon, 05 Oct 2026 12:00:00 -0300

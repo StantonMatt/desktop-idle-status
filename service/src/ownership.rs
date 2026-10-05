@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Exclusive service ownership and fail-closed monitoring on the same bus.
 use crate::api;
 use futures_util::StreamExt;

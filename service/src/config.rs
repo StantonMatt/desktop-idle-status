@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Read-only INI/KConfig subset. Profile defaults match PowerDevil 6.6.6 (non-mobile).
 use std::{
     collections::{HashMap, HashSet},

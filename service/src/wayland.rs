@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Input-only away tracking plus fresh paired fallback probes. Never creates inhibitors.
 use std::time::Duration;
 use tokio::{

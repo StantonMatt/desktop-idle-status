@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 // A tiny mapped xdg toplevel; newline-delimited commands, no D-Bus.
 // m=minimize, r/i=release/create parent inhibitor, j/k=second object,
 // s=subsurface-only inhibition, u=release subsurface inhibitor,

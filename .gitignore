@@ -5,3 +5,13 @@
 **/target/
 __pycache__/
 *.pyc
+/dist/
+/debian/.debhelper/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.substvars
+/debian/desktop-idle-status/
+/debian/desktop-idle-status-kwin-bridge/
+/debian/cargo-home/
+/debian/test-data/
+/obj-*/

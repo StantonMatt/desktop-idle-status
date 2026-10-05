@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 .pragma library
 
 function appName(row) { return String(row.appName || row.appId || ""); }

@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Read-only desktop adapters; only activate/start are user-requested writes.
 use crate::{
     api::Row,

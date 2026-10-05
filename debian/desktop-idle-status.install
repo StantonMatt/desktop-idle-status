@@ -1,0 +1,7 @@
+usr/bin/desktop-idle-status
+usr/lib/systemd/user/desktop-idle-status.service
+usr/share/dbus-1/services/io.github.StantonMatt.DesktopIdleStatus.service
+usr/share/plasma/plasmoids/io.github.StantonMatt.DesktopIdleStatus
+usr/share/knotifications6/desktop-idle-status.notifyrc
+usr/share/applications/io.github.StantonMatt.DesktopIdleStatus.desktop
+usr/share/icons/hicolor/scalable/apps/desktop-idle-status.svg

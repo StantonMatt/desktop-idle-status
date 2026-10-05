@@ -440,11 +440,14 @@ exact/file group immutability, missing `=`, whitespace/escapes, and typed expans
 those semantics were checked against installed KConfig 6.24.0 and its upstream
 `kconfigini.cpp`/`kconfiggroup.cpp` parsers.
 
-The user unit `service/desktop-idle-status.service` expects a separately installed
-`~/.local/bin/desktop-idle-status`. It is `Type=dbus`, bound to the graphical
+The user unit `service/desktop-idle-status.service` uses the packaged
+`/usr/bin/desktop-idle-status`. It is `Type=dbus`, bound to the graphical
 session and restarts on failure. `KillMode=process` keeps an explicitly launched
 screensaver alive when the observer unit stops. This task does not install or
-enable it.
+enable it during development. Debian installs it under `/usr/lib/systemd/user`
+and enables it for graphical sessions through `dh_installsystemduser`. Its
+D-Bus activation file names the same `BusName` and `SystemdService`. The widget's
+explicit Start Service action continues to use `systemctl --user start`.
 `--smoke` is a 15-second bounded observation mode: no service-name acquisition,
 no methods exported, no notifications, then a printed snapshot and exit. Always
 set scratch `XDG_DATA_HOME` when using it against the real desktop.

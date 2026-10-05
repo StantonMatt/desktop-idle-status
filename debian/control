@@ -1,0 +1,60 @@
+Source: desktop-idle-status
+Section: kde
+Priority: optional
+Maintainer: Matthew Stanton <stantonmatthewj@gmail.com>
+Build-Depends:
+ cargo (>= 1.93),
+ cmake (>= 3.22),
+ debhelper-compat (= 13),
+ extra-cmake-modules (>= 6.0),
+ kwin-dev (>= 4:6.6.6),
+ libdrm-dev,
+ libkf6coreaddons-dev,
+ libwayland-dev,
+ ninja-build,
+ pkgconf,
+ python3,
+ qt6-base-dev,
+ qt6-declarative-dev,
+ rustc (>= 1.93)
+Standards-Version: 4.7.3
+Rules-Requires-Root: no
+Homepage: https://github.com/StantonMatt/desktop-idle-status
+Vcs-Browser: https://github.com/StantonMatt/desktop-idle-status
+Vcs-Git: https://github.com/StantonMatt/desktop-idle-status.git
+
+Package: desktop-idle-status
+Architecture: any
+Static-Built-Using: ${rust:Static-Built-Using}
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ plasma-workspace (>= 4:6.6),
+ qml6-module-org-kde-kcmutils,
+ qml6-module-qtquick,
+ qml6-module-qtquick-controls,
+ qml6-module-qtquick-layouts,
+ systemd
+Recommends:
+ desktop-idle-status-kwin-bridge,
+ plasma-visual-screensaver
+Description: Desktop idle blockers and screensaver status for KDE Plasma
+ A session service and system-tray widget show effective idle inhibitors,
+ screensaver status, lock and sleep blockers, and recent blocking history.
+ The optional native KWin bridge supplies exact window attribution.
+
+Package: desktop-idle-status-kwin-bridge
+Architecture: linux-any
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ libkwin6 (>= ${kwin:Version})
+Description: Native KWin idle-inhibitor bridge for Desktop Idle Status
+ This plugin runs inside KWin and exposes its effective and latent Wayland
+ idle inhibitors to Desktop Idle Status over the session bus. It loads at
+ the next login. KWin refuses a plugin built for a different upstream
+ version; a rebuild is required after a KWin upstream update.
+ .
+ Kill switch: kwriteconfig6 --file kwinrc --group Plugins
+ --key desktopidlestatusbridgeEnabled false
+ (takes effect at the next login; does not unload a running plugin).

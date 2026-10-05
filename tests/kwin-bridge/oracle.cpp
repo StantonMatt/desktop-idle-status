@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Test-only oracle. Never installed or loaded outside run.sh's private KWin.
 #include <plugin.h>
 #include <input.h>

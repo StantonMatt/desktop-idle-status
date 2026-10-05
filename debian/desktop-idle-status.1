@@ -1,0 +1,30 @@
+.TH DESKTOP-IDLE-STATUS 1 "October 2026" "Desktop Idle Status 0.1.0"
+.SH NAME
+desktop-idle-status \- observe KDE Plasma desktop idle blockers
+.SH SYNOPSIS
+.B desktop-idle-status
+.RB [ --smoke ]
+.SH DESCRIPTION
+Desktop Idle Status is a session service for the Desktop Idle Status Plasma
+system-tray widget. It reports KWin idle inhibitors, screensaver status, lock
+and sleep policies, and recent blocking history over the session bus.
+.PP
+The graphical session starts the packaged systemd user unit. The widget's
+Start Service action can also start it explicitly. The service does not load
+the native KWin bridge or change desktop settings.
+.SH OPTIONS
+.TP
+.B --smoke
+Observe for 15 seconds, print a snapshot, and exit. This mode does not acquire
+the service bus name or export control methods. Use a separate XDG_DATA_HOME
+when diagnosing a session to avoid sharing the daemon's history lock.
+.SH FILES
+User history and its advisory lock are stored under
+.I $XDG_DATA_HOME/desktop-idle-status/
+(default
+.IR ~/.local/share/desktop-idle-status/ ).
+Desktop settings are read from the usual KDE user and system configuration
+locations and are never rewritten by this service.
+.SH SEE ALSO
+.BR systemctl (1),
+.BR kwriteconfig6 (1)

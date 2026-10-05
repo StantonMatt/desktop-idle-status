@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=io.github.StantonMatt.DesktopIdleStatus
+Exec=/usr/bin/desktop-idle-status
+SystemdService=desktop-idle-status.service

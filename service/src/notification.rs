@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Pure return-event decisions and presentation helpers; the plasmoid owns delivery.
 use crate::{
     history::{Entry, duration, union_seconds},

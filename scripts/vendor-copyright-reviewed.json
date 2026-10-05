@@ -1,0 +1,617 @@
+{
+  "async-broadcast": {
+    "name": "async-broadcast",
+    "version": "0.7.2",
+    "checksum_manifest": "6597c9517df36a15f4e243e17c0d3ffe21ba71443971bc5cbfcc7acdfe5f0233"
+  },
+  "async-recursion": {
+    "name": "async-recursion",
+    "version": "1.2.0",
+    "checksum_manifest": "48e697637470a4e38a0b532fa39754a84e00027a8e693640cd60e0fcaa93b88e"
+  },
+  "async-trait": {
+    "name": "async-trait",
+    "version": "0.1.92",
+    "checksum_manifest": "93e15ed1bfabd2fb3114e9b7a65f9c6a7ca1c7f233386754c8f6d1267998396c"
+  },
+  "autocfg": {
+    "name": "autocfg",
+    "version": "1.5.1",
+    "checksum_manifest": "5db7ec75093eb5d5217141d6d03fd4cfc6549e34ae8785bf7d25d8fbe60b63b5"
+  },
+  "bitflags": {
+    "name": "bitflags",
+    "version": "2.13.2",
+    "checksum_manifest": "cfca39c707c4571d21d4a8eebf1e3bdb8751dcf9e87617ef6b76cf2be41766d5"
+  },
+  "bumpalo": {
+    "name": "bumpalo",
+    "version": "3.20.3",
+    "checksum_manifest": "3daecf787126dd9dc41f3f7d6f99c39a9f633fb747256a4e65491640a6468168"
+  },
+  "bytes": {
+    "name": "bytes",
+    "version": "1.12.1",
+    "checksum_manifest": "135efef7cd708a87ec0108ae058fba5fd42bac64b96cb4803a92cd6373e07624"
+  },
+  "cc": {
+    "name": "cc",
+    "version": "1.6.0",
+    "checksum_manifest": "3ac3ac29db8ad703dc0adec68e8aaa9861ddd1f854bc5dd3659834ed71de91c0"
+  },
+  "cfg-if": {
+    "name": "cfg-if",
+    "version": "1.0.5",
+    "checksum_manifest": "cf5a27f0edd863a614631ca118670ee7caed2e350f15cfb9561efbedcc8b9027"
+  },
+  "downcast-rs": {
+    "name": "downcast-rs",
+    "version": "1.2.1",
+    "checksum_manifest": "2d7c34f113aa2b3368f6b8d5df60d317282e7ce74c3050831bb55fc10099bcd9"
+  },
+  "endi": {
+    "name": "endi",
+    "version": "1.1.1",
+    "checksum_manifest": "dcd55898da97323c12e4c9a21a59c4f2ba7eaa964494d51e937d26d97b51b218"
+  },
+  "enumflags2": {
+    "name": "enumflags2",
+    "version": "0.7.12",
+    "checksum_manifest": "fe1642f5ad26eb52e4e174ed472b09166eade0f8ae4dd8b050fd5b5e17ae29d2"
+  },
+  "enumflags2_derive": {
+    "name": "enumflags2_derive",
+    "version": "0.7.12",
+    "checksum_manifest": "c9309fee1c5ce8d61767daddfd43d8639793359430b686efa17a90255ed5c91b"
+  },
+  "equivalent": {
+    "name": "equivalent",
+    "version": "1.0.2",
+    "checksum_manifest": "3c0fb5c27182bb4b357ae1a5ae3df54187922580f8316c231163f1ebaff18fa9"
+  },
+  "errno": {
+    "name": "errno",
+    "version": "0.3.14",
+    "checksum_manifest": "b2b39adf2c6dda127c21ee5a63f04261f79655befd8ab0238e8abcaf394f7186"
+  },
+  "event-listener": {
+    "name": "event-listener",
+    "version": "5.4.2",
+    "checksum_manifest": "233c49d00d71c7bbac092d161f60382fd30643e679ed23aaff1f085c3ae6d2ce"
+  },
+  "event-listener-strategy": {
+    "name": "event-listener-strategy",
+    "version": "0.5.4",
+    "checksum_manifest": "6dd800f9f09bb4944dc2551ab960c58a8479a08259c18b6bf6e7af30cfb0a1f0"
+  },
+  "fallible-iterator": {
+    "name": "fallible-iterator",
+    "version": "0.3.0",
+    "checksum_manifest": "5bee35b6abe7e385991e15fa926af4c37f42d10d8768bd0336c8edd480101f16"
+  },
+  "fallible-streaming-iterator": {
+    "name": "fallible-streaming-iterator",
+    "version": "0.1.9",
+    "checksum_manifest": "984f5e917218afcfbfe11c922a63c3dbf15b8839c2a11de9323c3819e63ae859"
+  },
+  "fastrand": {
+    "name": "fastrand",
+    "version": "2.5.0",
+    "checksum_manifest": "57b40568d415515d04c69bfa7b70e922ef3f49965312a88561d5ac0bd2c1549e"
+  },
+  "find-msvc-tools": {
+    "name": "find-msvc-tools",
+    "version": "0.1.14",
+    "checksum_manifest": "f9193be91a3188890452b586cb83232acc65b4d8a9fe17f9b48393d6e6cb5b93"
+  },
+  "foldhash": {
+    "name": "foldhash",
+    "version": "0.2.0",
+    "checksum_manifest": "84e70113d6fb614ae0d39ea0c7975a737dc8edf57950046dd7786146acaabe8b"
+  },
+  "fsevent-sys": {
+    "name": "fsevent-sys",
+    "version": "4.1.0",
+    "checksum_manifest": "d0e10c27028322f9d041199f386e9ca9285dd4911a276c610528334a3380840f"
+  },
+  "futures-core": {
+    "name": "futures-core",
+    "version": "0.3.34",
+    "checksum_manifest": "3d231eb908a736a9af71966fa8ac5adf6296fff582654fe26c0def878e46e943"
+  },
+  "futures-io": {
+    "name": "futures-io",
+    "version": "0.3.34",
+    "checksum_manifest": "daad5a071485434c9777eb13883075204186b3b7ce640789f4f6a13fee9a2ddf"
+  },
+  "futures-lite": {
+    "name": "futures-lite",
+    "version": "2.6.1",
+    "checksum_manifest": "fa5fbe809c097b11b2503a6c1e759e4aaf8e4ca81ef4f362ad6aa67152c1d2b0"
+  },
+  "futures-macro": {
+    "name": "futures-macro",
+    "version": "0.3.34",
+    "checksum_manifest": "f63d94cd5a1ae08306388749e7273f52adaf9d971b667e230ab5d1c4fddc0553"
+  },
+  "futures-task": {
+    "name": "futures-task",
+    "version": "0.3.34",
+    "checksum_manifest": "490cd9ad43dacea8f4de188f5e58eabf55643b53cea7b97dbbe64a618909268f"
+  },
+  "futures-util": {
+    "name": "futures-util",
+    "version": "0.3.34",
+    "checksum_manifest": "fb668983c7548e7ff2e5da9606c28e268ceb8d03fc511319c18991e0fb947615"
+  },
+  "getrandom": {
+    "name": "getrandom",
+    "version": "0.4.3",
+    "checksum_manifest": "f14aff5d7b150d04d0ca41bc04cf58fe602e3259f77dfe87a843d84c86e18cac"
+  },
+  "hashbrown": {
+    "name": "hashbrown",
+    "version": "0.17.1",
+    "checksum_manifest": "828ee9b1c953c4e358ebcc7981150eb214027b0c3efc41e991ed5d67fbb6720f"
+  },
+  "hashbrown-0.16.1": {
+    "name": "hashbrown",
+    "version": "0.16.1",
+    "checksum_manifest": "c1f6fa1490ae8ae854a59a2b78ae653bdf9fed0d82bac2526db104a5344739cb"
+  },
+  "hashlink": {
+    "name": "hashlink",
+    "version": "0.11.1",
+    "checksum_manifest": "06227b6c4f929f0a507853f8efce91f88b820af43f019e4cd0ae32a97367f9f7"
+  },
+  "hex": {
+    "name": "hex",
+    "version": "0.4.3",
+    "checksum_manifest": "ff9aeac68a570afe396a697023a8a56c68deabc8271c54ef26e672648e837de0"
+  },
+  "indexmap": {
+    "name": "indexmap",
+    "version": "2.14.2",
+    "checksum_manifest": "58bd0b37049fcbbd063b08ed969c6133a9b65ad5f8a8ae03e17768d457a4bb70"
+  },
+  "inotify": {
+    "name": "inotify",
+    "version": "0.11.5",
+    "checksum_manifest": "df7843165b8393920a657f2a5866199513f2df53db4c314eb1230766b5be9360"
+  },
+  "inotify-sys": {
+    "name": "inotify-sys",
+    "version": "0.1.8",
+    "checksum_manifest": "47f0cc53dcdc9fe33a0a793234f274b784a41370f5e2318a023fe172cc9380c8"
+  },
+  "js-sys": {
+    "name": "js-sys",
+    "version": "0.3.106",
+    "checksum_manifest": "c00fc889895f95e8ef3f783a21189ecc61c7137de4327e5aa08b1dc5acf52e66"
+  },
+  "kqueue": {
+    "name": "kqueue",
+    "version": "1.2.1",
+    "checksum_manifest": "4950273f294d6bc0bab394ff01487adcce79d2948e8bee90415fc24fd231e808"
+  },
+  "kqueue-sys": {
+    "name": "kqueue-sys",
+    "version": "1.1.2",
+    "checksum_manifest": "c5ffdbecd4e539f717c58054005cd98c4e1024212dce5490cc9cfcea2e800cf0"
+  },
+  "libc": {
+    "name": "libc",
+    "version": "0.2.190",
+    "checksum_manifest": "c57ab582b00f2a50c9c4c3e698f50d91e25740bbeadc9a5a0a1d2beedd7fac03"
+  },
+  "libsqlite3-sys": {
+    "name": "libsqlite3-sys",
+    "version": "0.36.0",
+    "checksum_manifest": "aa585c3a8f84c9467cc2d29fe5578922a64f09c829ba6bce8a50e2e1a51eb88c"
+  },
+  "linux-raw-sys": {
+    "name": "linux-raw-sys",
+    "version": "0.12.1",
+    "checksum_manifest": "8ec15c9f23d3f907bb2ce1daff5e683b4dcc3aada365956bc903b9e1addc9fce"
+  },
+  "log": {
+    "name": "log",
+    "version": "0.4.34",
+    "checksum_manifest": "002b897221a0af4c7b47248af0473b2902056d889a925e2fc3fc0ffe7bce8637"
+  },
+  "memchr": {
+    "name": "memchr",
+    "version": "2.8.3",
+    "checksum_manifest": "b213e5962e9ba9eb91d04db8f4d592564a99e409d919c7ba4005859b1625d5ab"
+  },
+  "memoffset": {
+    "name": "memoffset",
+    "version": "0.9.1",
+    "checksum_manifest": "3e9a026f8273fb234f22d7ea06c6683bf23e73b6d8fd2e26798daad982dab125"
+  },
+  "mio": {
+    "name": "mio",
+    "version": "1.2.4",
+    "checksum_manifest": "3f55d5316d40d391162fe1d14602077d6feaba0651b9507ac880095657fcde04"
+  },
+  "notify": {
+    "name": "notify",
+    "version": "8.2.0",
+    "checksum_manifest": "b2500df234397c3f1111a2f0fafc6744afd8a179f75239084afe0d32e6c4bb63"
+  },
+  "notify-types": {
+    "name": "notify-types",
+    "version": "2.1.0",
+    "checksum_manifest": "62b391405c94c9ad04c22ba1336df04f6bb8e814452c5809e86fcd60fd0b9df4"
+  },
+  "once_cell": {
+    "name": "once_cell",
+    "version": "1.21.4",
+    "checksum_manifest": "8ff8d83560650b50eba2b9a0302279b0f064e4b4b385caea1f3a5052d3e39f14"
+  },
+  "ordered-stream": {
+    "name": "ordered-stream",
+    "version": "0.2.0",
+    "checksum_manifest": "3b670f9333356e8428239468f6f82c136a4f3e72ecdca88ddf4538d19a050077"
+  },
+  "parking": {
+    "name": "parking",
+    "version": "2.2.1",
+    "checksum_manifest": "e6386a1a3df36ad7fd87e9f205f0fc65d65d16da316da18602bdb29aa1b78329"
+  },
+  "pin-project-lite": {
+    "name": "pin-project-lite",
+    "version": "0.2.17",
+    "checksum_manifest": "3762bd2f146a7ab34aa495eecd73021181600b209f00922580ac9bb0c89b7b9a"
+  },
+  "pkg-config": {
+    "name": "pkg-config",
+    "version": "0.3.34",
+    "checksum_manifest": "df1befd80f6538411b22003b20aad1697ca0da145848923c279e9288337352cc"
+  },
+  "proc-macro-crate": {
+    "name": "proc-macro-crate",
+    "version": "3.5.0",
+    "checksum_manifest": "b4121ca3d37db321a25eca8fee8fa1cc94b1ca7c21759e9b355e2ce9e8f9dbea"
+  },
+  "proc-macro2": {
+    "name": "proc-macro2",
+    "version": "1.0.107",
+    "checksum_manifest": "2fc58a08340ecaa507bdbc0457670c0f3e1173e92177413e21f09ae2b595a713"
+  },
+  "quick-xml": {
+    "name": "quick-xml",
+    "version": "0.41.0",
+    "checksum_manifest": "d9273eb6507fa887d428a1dfdaa927052609d3fba39e3e8d2c9af951691d0d13"
+  },
+  "quote": {
+    "name": "quote",
+    "version": "1.0.47",
+    "checksum_manifest": "fae5f077e7cd9ec1b69e63b945d1b5144bada3aeb38826a561801571e8ba9a31"
+  },
+  "r-efi": {
+    "name": "r-efi",
+    "version": "6.0.0",
+    "checksum_manifest": "ca8282540f0bc3ce35ef623a7e57d67971954e132398cc38ccb443cc742844b9"
+  },
+  "rsqlite-vfs": {
+    "name": "rsqlite-vfs",
+    "version": "0.1.1",
+    "checksum_manifest": "de37611a2422735b16dabe0a51bb1be0e42b259c65fce11dcf3cebaf94e09e5c"
+  },
+  "rusqlite": {
+    "name": "rusqlite",
+    "version": "0.38.0",
+    "checksum_manifest": "5ff130c9ed12b0f771dd27eb5bb1b9a97aceeb13183bdde9fdfc2737f4ff699e"
+  },
+  "rustix": {
+    "name": "rustix",
+    "version": "1.1.5",
+    "checksum_manifest": "358a3fae4f490bb4387fd81108d657cc8dd08451a0c32c54e13a54d960067368"
+  },
+  "rustversion": {
+    "name": "rustversion",
+    "version": "1.0.23",
+    "checksum_manifest": "05e5ace0bc8d5f1aa382f1d8537e4a64796a5c9b9c3e0c46578944b3cbb924f6"
+  },
+  "same-file": {
+    "name": "same-file",
+    "version": "1.0.6",
+    "checksum_manifest": "2bf09eb7013e2d997f1a51537db04bb8506fb2698b49ceda89b0e6e0bdb1caa1"
+  },
+  "serde": {
+    "name": "serde",
+    "version": "1.0.229",
+    "checksum_manifest": "46b15697a38f3df10fd83dea8177a017ab4633cf6d3fa1175fa6e78ce6d47d8d"
+  },
+  "serde_core": {
+    "name": "serde_core",
+    "version": "1.0.229",
+    "checksum_manifest": "0b234843ed1f4459b0916abe3e1eb9e8b1c3038f72ae4f2ab5b96fbeb4300b9a"
+  },
+  "serde_derive": {
+    "name": "serde_derive",
+    "version": "1.0.229",
+    "checksum_manifest": "d6cbb8fd54539926f266fd90eb616971717e1e79553b3aa3f02a921be55d3b80"
+  },
+  "serde_repr": {
+    "name": "serde_repr",
+    "version": "0.1.21",
+    "checksum_manifest": "ce0e5e54bad936daf99970e8c207c4ca0e13b6636224d486df5ade4f9a2c6d8e"
+  },
+  "shlex": {
+    "name": "shlex",
+    "version": "2.0.1",
+    "checksum_manifest": "0251389c1c8b5d3773865f048973f6a76783fb2ce87e2f134a5aeaf558c9ee3b"
+  },
+  "signal-hook-registry": {
+    "name": "signal-hook-registry",
+    "version": "1.4.8",
+    "checksum_manifest": "33dabddb8d1dd3870bc1bfe9eeb442edc48c80b7ba7f5c9709b6c5f1fd9c2b82"
+  },
+  "slab": {
+    "name": "slab",
+    "version": "0.4.12",
+    "checksum_manifest": "74213c3aa0e9b702186f6a52b204a3c6efae5747da09e855163911d014565e8c"
+  },
+  "smallvec": {
+    "name": "smallvec",
+    "version": "1.16.2",
+    "checksum_manifest": "b20a8fc1d47e8ab3c74e7a05ce980dc75a7dbf8511663e9ca27d60a7f1408296"
+  },
+  "socket2": {
+    "name": "socket2",
+    "version": "0.6.5",
+    "checksum_manifest": "0a4fdd9645dcd395916c63da5b8f01386b853684dc4d4fb71643ae5ff7d86513"
+  },
+  "sqlite-wasm-rs": {
+    "name": "sqlite-wasm-rs",
+    "version": "0.5.5",
+    "checksum_manifest": "997185656c2f7302b0dbb26aefeddf6c8bee93e579a9a64bd6b259711f10ecfd"
+  },
+  "syn": {
+    "name": "syn",
+    "version": "3.0.6",
+    "checksum_manifest": "6396baf8595deb04b7905dcd97cb20670c307528194a41ff937d1f104b5158fb"
+  },
+  "syn-2.0.119": {
+    "name": "syn",
+    "version": "2.0.119",
+    "checksum_manifest": "54b72e89f59dd252dbb35ab66f03a4e356772dbdd4d61744c2dc0fde76b59449"
+  },
+  "tempfile": {
+    "name": "tempfile",
+    "version": "3.27.0",
+    "checksum_manifest": "6eb8b87a90a68c4380614a25dcbbb6e713e8f78391ba211103eca695dd7fb70b"
+  },
+  "thiserror": {
+    "name": "thiserror",
+    "version": "2.0.21",
+    "checksum_manifest": "fff1d34ae909b000bb9a80a6e6c8335f0eb0afe38e19d43e5d13b415b2ab0634"
+  },
+  "thiserror-impl": {
+    "name": "thiserror-impl",
+    "version": "2.0.21",
+    "checksum_manifest": "1bdf0b3a0dd6cc56171aa278baf54708db0e8d3356fe44f548a673fe7b1767d5"
+  },
+  "tokio": {
+    "name": "tokio",
+    "version": "1.53.2",
+    "checksum_manifest": "b6b9cfab6e5250846f9df1f04b5ecf34fb915d270370bdb2216f1741fbc4271d"
+  },
+  "tokio-macros": {
+    "name": "tokio-macros",
+    "version": "2.7.2",
+    "checksum_manifest": "4b701d975ee4baaaf1129714a47df1f4bfad3e3465695952ce1019431d986803"
+  },
+  "toml_datetime": {
+    "name": "toml_datetime",
+    "version": "1.1.1+spec-1.1.0",
+    "checksum_manifest": "2007ee0c2a0596829adba280f6d9841f3ad4b5cfa05b8adee66765d294f87d3c"
+  },
+  "toml_edit": {
+    "name": "toml_edit",
+    "version": "0.25.15+spec-1.1.0",
+    "checksum_manifest": "8763a94b004abff318247916a20b2456bf1c945793268bf89e7a25b7f09075c7"
+  },
+  "toml_parser": {
+    "name": "toml_parser",
+    "version": "1.1.3+spec-1.1.0",
+    "checksum_manifest": "b9cc334859577eb78c24661ac9e90149ac3fa00ca405861f0e55e694e4798949"
+  },
+  "tracing": {
+    "name": "tracing",
+    "version": "0.1.44",
+    "checksum_manifest": "a7d4d74a89bc3978af9e1fe5f9c4e0d923e6ea821e839caf2c355084f266adb0"
+  },
+  "tracing-attributes": {
+    "name": "tracing-attributes",
+    "version": "0.1.31",
+    "checksum_manifest": "dd501dde24e24ef845e19450bf70994ae15cf7dc39b69ed1e9ebcb05b6c32f38"
+  },
+  "tracing-core": {
+    "name": "tracing-core",
+    "version": "0.1.36",
+    "checksum_manifest": "a0b6145e817b7ef9d70d2d3547806b7bba55d82168351bca3a8281e54e8aa6e7"
+  },
+  "uds_windows": {
+    "name": "uds_windows",
+    "version": "1.2.1",
+    "checksum_manifest": "32df547f2123d1b99e709d95a103ca43d4c330dc21ec8c091cbf988de22ae6fe"
+  },
+  "unicode-ident": {
+    "name": "unicode-ident",
+    "version": "1.0.26",
+    "checksum_manifest": "8eec606416ac550023d902d3044d77902a5c3a9f50bec5a6e30b1637850c75d1"
+  },
+  "uuid": {
+    "name": "uuid",
+    "version": "1.27.0",
+    "checksum_manifest": "4d70ae90c699ed46a2fb31f2abd11b45533024a215b0d8d7eb8418539aa500f1"
+  },
+  "vcpkg": {
+    "name": "vcpkg",
+    "version": "0.2.15",
+    "checksum_manifest": "51b9b249e7e100ac5ad83723a1d4fda189bd1d885bf4c4bfc0cf6ee654b6bb37"
+  },
+  "walkdir": {
+    "name": "walkdir",
+    "version": "2.5.0",
+    "checksum_manifest": "af44c4991977e1618e6244c402b4a6d39373d419a6b68f6ac2fa5c721589dbba"
+  },
+  "wasi": {
+    "name": "wasi",
+    "version": "0.11.1+wasi-snapshot-preview1",
+    "checksum_manifest": "940d8b1046ba7dd61b481f8cccec1c0fe27946479ca51d0eddaf743ca57fbcd0"
+  },
+  "wasm-bindgen": {
+    "name": "wasm-bindgen",
+    "version": "0.2.129",
+    "checksum_manifest": "71b64f7b794f99237e80ab18b1b7d49d140772ab74d390b7b8b840abf0346aa3"
+  },
+  "wasm-bindgen-macro": {
+    "name": "wasm-bindgen-macro",
+    "version": "0.2.129",
+    "checksum_manifest": "ca26c51a589908be3b6a9386fc6a3e2756a1d10f7c6ff34b67cd2f68e20ebf90"
+  },
+  "wasm-bindgen-macro-support": {
+    "name": "wasm-bindgen-macro-support",
+    "version": "0.2.129",
+    "checksum_manifest": "5ad04c17d2d252d6b92ca4d5babfd477ee50522cb12e65e6a1794760530eb377"
+  },
+  "wasm-bindgen-shared": {
+    "name": "wasm-bindgen-shared",
+    "version": "0.2.129",
+    "checksum_manifest": "7b2bc9037a0cdea880f904857d276cf4769804a97fadd15342c5d2e6b3e2fcdf"
+  },
+  "wayland-backend": {
+    "name": "wayland-backend",
+    "version": "0.3.17",
+    "checksum_manifest": "d4343ac59b385269fd357fcbfae3cf6fcb3a45e6a7c48c0e42338300df4e3dc9"
+  },
+  "wayland-client": {
+    "name": "wayland-client",
+    "version": "0.31.15",
+    "checksum_manifest": "c4fd4e403b0af8b87e48dc0f73fba06b278a05069482d6fddfaf91e8324e31e3"
+  },
+  "wayland-protocols": {
+    "name": "wayland-protocols",
+    "version": "0.32.13",
+    "checksum_manifest": "73af60a4020a184079ff56e837093e944cd2b42cb42e8234cb362fa549eac6e7"
+  },
+  "wayland-scanner": {
+    "name": "wayland-scanner",
+    "version": "0.31.11",
+    "checksum_manifest": "52ccbc5f7bed1fa0aa19f19d36437fa4cc47491ff8963bbf6a777a7507258eea"
+  },
+  "wayland-sys": {
+    "name": "wayland-sys",
+    "version": "0.31.11",
+    "checksum_manifest": "311fcf2b8cee328af0441bee855edb7530654c6cf405f3c3b8cee6964df69652"
+  },
+  "winapi-util": {
+    "name": "winapi-util",
+    "version": "0.1.11",
+    "checksum_manifest": "f2146f0cd77fc913fe3a534e12fdfe858e5e5ba049b856caa281df24a8843cf6"
+  },
+  "windows-link": {
+    "name": "windows-link",
+    "version": "0.2.1",
+    "checksum_manifest": "daf78f4991cf2257a4295473870920f25d85c45bcacabd35c681ab6cd548ac4e"
+  },
+  "windows-sys": {
+    "name": "windows-sys",
+    "version": "0.61.2",
+    "checksum_manifest": "e68e3c0d6ef96320f035e91de6ecf3aceb43a672d017e637479103c60274dcfe"
+  },
+  "windows-sys-0.60.2": {
+    "name": "windows-sys",
+    "version": "0.60.2",
+    "checksum_manifest": "c7b983c11d6d46348c3027afddfc1d1373219c084c5791e1cda4563dea0e021b"
+  },
+  "windows-targets": {
+    "name": "windows-targets",
+    "version": "0.53.5",
+    "checksum_manifest": "dc086a2561b716f549542d897b8d157bef0b9850a8b48ebe818febfa5c84ea89"
+  },
+  "windows_aarch64_gnullvm": {
+    "name": "windows_aarch64_gnullvm",
+    "version": "0.53.1",
+    "checksum_manifest": "0b678948cfaba9aa05f99f6c5f1f87231507eff80e5e9a61553683b15743e32b"
+  },
+  "windows_aarch64_msvc": {
+    "name": "windows_aarch64_msvc",
+    "version": "0.53.1",
+    "checksum_manifest": "811cc1467fe48f3870343e24e2417840eaea84b63df25eac56fa1938a577aba2"
+  },
+  "windows_i686_gnu": {
+    "name": "windows_i686_gnu",
+    "version": "0.53.1",
+    "checksum_manifest": "c260eed281791616b451e253bf07813ad74c72a767756b4718b8d5417f129a3f"
+  },
+  "windows_i686_gnullvm": {
+    "name": "windows_i686_gnullvm",
+    "version": "0.53.1",
+    "checksum_manifest": "e9b229fe324a57aaa4b08cdbc6ef4d765bf18b11328173530064482d8b39e216"
+  },
+  "windows_i686_msvc": {
+    "name": "windows_i686_msvc",
+    "version": "0.53.1",
+    "checksum_manifest": "07866947c802f539df22f0ccb39746eb71f00766e0aad8671f12f420b130fec6"
+  },
+  "windows_x86_64_gnu": {
+    "name": "windows_x86_64_gnu",
+    "version": "0.53.1",
+    "checksum_manifest": "8637f6a95de19b74575e44e2ecaa8fbd55a6290d714985d61467d5f2019dc0db"
+  },
+  "windows_x86_64_gnullvm": {
+    "name": "windows_x86_64_gnullvm",
+    "version": "0.53.1",
+    "checksum_manifest": "528dd8d6aab951ddb4ef93c8839aeca2438ce6bf850a3fcd418c62e7dc9c52ff"
+  },
+  "windows_x86_64_msvc": {
+    "name": "windows_x86_64_msvc",
+    "version": "0.53.1",
+    "checksum_manifest": "8f750027d3d1acafe5e447c7a564f69c0c1b300fb3f837d870b77ce47a8053d4"
+  },
+  "winnow": {
+    "name": "winnow",
+    "version": "1.0.4",
+    "checksum_manifest": "326cd8312c797598558e8396ce53611261749289890260851c75ffd0ea5ed66b"
+  },
+  "zbus": {
+    "name": "zbus",
+    "version": "5.19.0",
+    "checksum_manifest": "47f599acfcf664ef56cb90c6c4416cfbca8a7a68507b595fa8847b610fd3bece"
+  },
+  "zbus_macros": {
+    "name": "zbus_macros",
+    "version": "5.19.0",
+    "checksum_manifest": "3d412c1640d13fdb93e9fce3daf67c71dae5ddd6e01037b8e9a2005357eee39b"
+  },
+  "zbus_names": {
+    "name": "zbus_names",
+    "version": "4.3.4",
+    "checksum_manifest": "e39d845f43db18489b9aaad1703f173c987fda9c041dbd499e6ca45e4081c23a"
+  },
+  "zcheapstr": {
+    "name": "zcheapstr",
+    "version": "1.1.0",
+    "checksum_manifest": "e1d6250432751369875032f9aadbba1cbb1797deb2cb6642f6f9945022f2fd86"
+  },
+  "zvariant": {
+    "name": "zvariant",
+    "version": "5.15.0",
+    "checksum_manifest": "de513ae49dcaefcc8c005d0bc933f2bdb4b44482d35313b30114b951276420ac"
+  },
+  "zvariant_derive": {
+    "name": "zvariant_derive",
+    "version": "5.15.0",
+    "checksum_manifest": "6453ec7d29c5263c50689c0ae6d4c6875d6e3e38c0bf49f70d72698eeef3fd93"
+  },
+  "zvariant_utils": {
+    "name": "zvariant_utils",
+    "version": "4.2.0",
+    "checksum_manifest": "438c1b3517efa86ab681f97a5cc5b8957acdbcd1ebc82c67bfdfbb42738533af"
+  }
+}

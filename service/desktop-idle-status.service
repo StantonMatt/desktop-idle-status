@@ -6,7 +6,7 @@ After=graphical-session.target
 [Service]
 Type=dbus
 BusName=io.github.StantonMatt.DesktopIdleStatus
-ExecStart=%h/.local/bin/desktop-idle-status
+ExecStart=/usr/bin/desktop-idle-status
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=5

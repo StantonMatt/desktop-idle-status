@@ -1,0 +1,52 @@
+#!/usr/bin/make -f
+# SPDX-License-Identifier: GPL-3.0-or-later
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildopts.mk
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_CXXFLAGS_MAINT_APPEND = -Wformat -Werror=format-security
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/buildflags.mk
+export RUSTFLAGS := $(RUSTFLAGS) $(patsubst %,-Clink-arg=%,$(LDFLAGS))
+export CARGO_HOME = $(CURDIR)/debian/cargo-home
+export CARGO_TARGET_DIR = $(CURDIR)/obj-$(DEB_HOST_GNU_TYPE)/cargo
+export CARGO_NET_OFFLINE = true
+export CARGO_PROFILE_RELEASE_DEBUG = 2
+export DESKTOP_IDLE_STATUS_TEST_ROOT = $(CURDIR)/debian/test-data
+
+%:
+	dh $@ --buildsystem=cmake+ninja --sourcedirectory=kwin-bridge
+
+override_dh_auto_configure:
+	python3 scripts/check-versions.py
+	mkdir -p $(CARGO_HOME)
+	printf '%s\n' '[source.crates-io]' 'replace-with = "vendored-sources"' '[source.vendored-sources]' 'directory = "$(CURDIR)/vendor"' > $(CARGO_HOME)/config.toml
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=None -DDESKTOP_IDLE_STATUS_BRIDGE_ENABLED_BY_DEFAULT=ON
+	cmake -S plasmoid -B obj-$(DEB_HOST_GNU_TYPE)/plasmoid -G Ninja -DCMAKE_INSTALL_PREFIX=/usr
+
+override_dh_auto_build:
+	dh_auto_build
+	/usr/bin/cargo build --manifest-path service/Cargo.toml --release --frozen -j $(or $(DEB_BUILD_OPTION_PARALLEL),1)
+
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	# Pure library/binary unit tests only. Private-bus integration tests are
+	# run by maintainers separately; they need dbus-daemon and Wayland fixtures.
+	/usr/bin/cargo test --manifest-path service/Cargo.toml --release --frozen --lib --bin desktop-idle-status
+endif
+
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/tmp
+	DESTDIR=$(CURDIR)/debian/tmp cmake --install obj-$(DEB_HOST_GNU_TYPE)/plasmoid
+	install -D -m755 $(CARGO_TARGET_DIR)/release/desktop-idle-status debian/tmp/usr/bin/desktop-idle-status
+	install -D -m644 service/desktop-idle-status.service debian/tmp/usr/lib/systemd/user/desktop-idle-status.service
+	install -D -m644 debian/io.github.StantonMatt.DesktopIdleStatus.service debian/tmp/usr/share/dbus-1/services/io.github.StantonMatt.DesktopIdleStatus.service
+
+override_dh_gencontrol:
+	dh_gencontrol -- -Vkwin:Version="$$(dpkg-query -W -f='$${Version}' libkwin6)" -Vrust:Static-Built-Using="$$(debian/rust-static-built-using.sh /usr/bin/rustc)"
+
+override_dh_auto_clean:
+	rm -rf obj-$(DEB_HOST_GNU_TYPE) debian/cargo-home debian/test-data
+
+override_dh_clean:
+	# Cargo.toml.orig is checksummed crate source, not a patch backup.
+	dh_clean -Xvendor

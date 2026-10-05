@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! Per-window away intervals and retention, independent of clocks and D-Bus.
 use crate::model::Blocker;
 use rusqlite::{Connection, params};

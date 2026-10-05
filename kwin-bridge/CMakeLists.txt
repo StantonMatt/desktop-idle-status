@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
-project(desktop_idle_status_kwin_bridge VERSION 0.1 LANGUAGES CXX)
+project(desktop_idle_status_kwin_bridge VERSION 0.1.0 LANGUAGES CXX)
+
+# Only distribution packages opt in. Development builds stay disabled.
+option(DESKTOP_IDLE_STATUS_BRIDGE_ENABLED_BY_DEFAULT "Enable bridge at KWin startup" OFF)
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/metadata.json" bridge_metadata)
+if(DESKTOP_IDLE_STATUS_BRIDGE_ENABLED_BY_DEFAULT)
+    string(REPLACE "\"EnabledByDefault\": false" "\"EnabledByDefault\": true" bridge_metadata "${bridge_metadata}")
+endif()
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/metadata.json" "${bridge_metadata}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

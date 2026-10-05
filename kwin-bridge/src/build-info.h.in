@@ -1,2 +1,4 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 #pragma once
 #define DESKTOP_IDLE_STATUS_KWIN_PACKAGE "@KWIN_PACKAGE_VERSION@"

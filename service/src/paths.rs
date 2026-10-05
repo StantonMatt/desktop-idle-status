@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 Matthew Stanton
+// SPDX-License-Identifier: GPL-3.0-or-later
 //! XDG paths never resolve against the process working directory.
 use std::{ffi::OsString, path::PathBuf};
 
